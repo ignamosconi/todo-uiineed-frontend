@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
-    <!-- 
-        La etiqueta <head> añade las siguientes características a la página:
-            1. SEO: A través de etiquetas <meta>, indica  palabras clave y descripción de la página.
-            2. Alertas personalizadas, para que no se muestren las por defecto del navegador. 
-    -->
     <head>
-        <!-- 1. ETIQUETAS META -->
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,8 +14,14 @@
         <link type="favicon" rel="shortcut icon" href="public/img/favicon.png"/>
         <link href="public/css/normalize.css" rel="stylesheet" media="screen">
         <link href="public/css/style.min.css" rel="stylesheet" media="screen">
-
-        <!-- 2. Alertas personalizadas -->
+        <script>
+            // Automatically detect and switch language
+            const browserLanguage = navigator.language || navigator.userLanguage;
+            const languageCode = browserLanguage.split('-')[0].toLowerCase();
+            if (!localStorage.getItem('uiineed-todos-lang')) localStorage.setItem('uiineed-todos-lang', languageCode);
+            const userLanguage = localStorage.getItem('uiineed-todos-lang');
+            if (userLanguage && userLanguage === "zh") window.location.href = (window.location.pathname === "/") ? 'index-zh.html' : window.location.href.replace('index.html', 'index-zh.html');
+        </script>
         <script>
             const nativeAlert = window.alert;
             window.alert = function(message, title = 'Prompt') {
@@ -32,11 +31,11 @@
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-                        <div class="custom-alert-title">${title}</div>
-                        <div class="custom-alert-content">${message}</div>
-                        <div class="custom-alert-buttons">
-                            <button class="custom-alert-btn confirm">OK</button>
-                        </div>
+<div class="custom-alert-title">${title}</div>
+<div class="custom-alert-content">${message}</div>
+<div class="custom-alert-buttons">
+    <button class="custom-alert-btn confirm">OK</button>
+</div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -62,12 +61,12 @@
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-                        <div class="custom-alert-title">${title}</div>
-                        <div class="custom-alert-content">${message}</div>
-                        <div class="custom-alert-buttons">
-                            <button class="custom-alert-btn cancel">Cancel</button>
-                            <button class="custom-alert-btn confirm">OK</button>
-                        </div>
+<div class="custom-alert-title">${title}</div>
+<div class="custom-alert-content">${message}</div>
+<div class="custom-alert-buttons">
+    <button class="custom-alert-btn cancel">Cancel</button>
+    <button class="custom-alert-btn confirm">OK</button>
+</div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -94,22 +93,15 @@
                 });
             };
         </script>
+        <!-- Vue 2.x Todo List -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script> -->
         <script src="public/js/vue.js"></script>
     </head>
 
-
-
     <body>
         <div class="bg-pattern"></div>
-
-        <!-- 
-            HTML PÁGINA WEB
-        -->
         <div class="todo-wrapper">
-
             <div id="todo-app" class="todo-app">
-
-                <!-- HEADER -->
                 <div class="container header ">
                     <div class="todo-input">
                         <h1 class="title">
@@ -153,50 +145,7 @@
                     </div>
                 </div>
 
-                <!-- CUSTOM INFO -->
-                <div class="nav">
-
-                    <!-- Botón "Github" -->
-                    <div class="github">
-                        <a href="https://github.com/ignamosconi/todo-uiineed-frontend" target="_blank" class="social-link" draggable="false">
-                            <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
-                        </a>
-                    </div>
-
-                    <!-- Recuadro "about" -->
-                   <div class="about">
-                        <div class="info">
-                            <div
-                                class="info-ico"
-                                @click="togglePop"
-                                :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
-                                About
-                            </div>
-                            <div class="popup animated popIn" v-if="!popShow">
-                                <div class="author">
-                                    <img src="public/img/author.jpg" alt="">
-                                    Igna :)
-                                </div>
-                                <div class="author-info">
-                                    <div class="author-desc">
-                                        I don't remember any code I wrote, even though it made me.
-                                    </div>
-                                </div>
-                                <div class="social">
-                                    
-                                    <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
-                                        <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                    <a href="mailto:ignamosconi@gmail.com" class="social-link">
-                                        <img src="public/img/social/mail.svg" class="ic-social" alt="">
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div> 
-                </div>
-
-                <!-- TODO LIST -->
+                <!-- todo list -->
                 <div class="container main">
                     <div class="todo-list-box">
                         <div class="bar-message">
@@ -421,103 +370,217 @@
                     </div>
                 </div>
 
+                <!-- Custom Info -->
+                <div class="nav">
+                    <div class="github">
+                        <a href="https://github.com/ricocc/uiineed-todo-list?ref=opensource-todo" target="_blank" class="social-link" draggable="false">
+                            <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                        </a>
+                    </div>
+                   <div class="about">
+                        <div class="info">
+                            <div
+                                class="info-ico"
+                                @click="togglePop"
+                                :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
+                                About
+                            </div>
+                            <div class="popup animated popIn" v-if="!popShow">
+                                <div class="author">
+                                    <img src="public/img/author.jpg" alt="">
+                                    RicoCC
+                                </div>
+                                <div class="author-info">
+                                    <div class="author-desc">
+                                        A simple one who loves design and code.
+                                    </div>
+                                </div>
+                                <div class="social">
+                                    <a href="https://x.com/ricouii" target="_blank" class="social-link">
+                                        <img src="public/img/social/x.svg" class="ic-social" alt="">
+                                    </a>
+                                    <a href="https://github.com/ricocc/uiineed-todo-list" target="_blank" class="social-link" draggable="false">
+                                        <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                                    </a>
+                                    <a href="mailto:ricocc@qq.com" class="social-link">
+                                        <img src="public/img/social/mail.svg" class="ic-social" alt="">
+                                    </a>
+                                    <a
+                                        href="https://www.xiaohongshu.com/user/profile/5f2b6903000000000101f51f"
+                                        target="_blank"
+                                        class="social-link">
+                                        <img src="public/img/social/xiaohongshu.svg" class="ic-social" alt="">
+                                    </a>
+
+                                    <a
+                                        href="https://dribbble.com/rrrricocc"
+                                        target="_blank"
+                                        class="social-link">
+                                        <img src="public/img/social/dribbble.svg" class="ic-social" alt="">
+                                    </a>
+
+                                </div>
+
+                                <a href="https://ricoui.com/?ref=todo" target="_blank" class="inspiration">🔖Rico's Blog↗
+                                </a>
+                            </div>
+                        </div>
+                    </div> 
+
+                <!-- witch Chinese Or English as homepage as required -->
+                    <div class="language switch-language">
+                        <a href="javascript:void(0)" class="en active" draggable="false">En</a>
+                        <span>/</span>
+                        <a href="index-zh.html" target="_self" class="zh" draggable="false" @click="saveLanguage('zh')">中</a>
+                    </div>
+                </div>
+
             </div>
-
-
-            <script>
-                // localStorage operations
-                var STORAGE_KEY = 'uiineed-todos';
-                var todoStorage = {
-                    fetch: function() {
-                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                        todos.forEach(function(todo, index) {
-                            todo.id = index;
-                        });
-                        todoStorage.uid = todos.length;
-                        return todos;
-                    },
-                    save: function(todos) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-                    }
+        </div>
+        <script>
+            // localStorage operations
+            var STORAGE_KEY = 'uiineed-todos';
+            var todoStorage = {
+                fetch: function() {
+                    var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                    todos.forEach(function(todo, index) {
+                        todo.id = index;
+                    });
+                    todoStorage.uid = todos.length;
+                    return todos;
+                },
+                save: function(todos) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
                 }
-            </script>
-            
-            <script>
-                // Vue instance initialization
-                var app = new Vue({
-                    el: '#todo-app',
-                    data: function() {
-                        return {
-                            todos: todoStorage.fetch(),
-                            newTodoTitle: '',
-                            editedTodo: null,
-                            intention: 'all', // Default: all
-                            checkEmpty: false,
-                            recycleBin: [],
-                            dragIndex: '',
-                            enterIndex: '',
-                            show: true,
-                            delayTime: '1',
-                            isShow: false,
-                            shortCut: 'OPEN✨',
-                            popShow: true,
-                            windowWidth: document.documentElement.clientWidth,
-                            slogan: this.getSlogan(),
-                            isEditing: false,
-                            originalSlogan: ""
-                        };
+            }
+        </script>
+        <script>
+            // Vue instance initialization
+            var app = new Vue({
+                el: '#todo-app',
+                data: function() {
+                    return {
+                        todos: todoStorage.fetch(),
+                        newTodoTitle: '',
+                        editedTodo: null,
+                        intention: 'all', // Default: all
+                        checkEmpty: false,
+                        recycleBin: [],
+                        dragIndex: '',
+                        enterIndex: '',
+                        show: true,
+                        delayTime: '1',
+                        isShow: false,
+                        shortCut: 'OPEN✨',
+                        popShow: true,
+                        windowWidth: document.documentElement.clientWidth,
+                        slogan: this.getSlogan(),
+                        isEditing: false,
+                        originalSlogan: ""
+                    };
+                },
+                watch: {
+                    windowWidth(val) {
+                        let that = this;
                     },
-                    watch: {
-                        windowWidth(val) {
-                            let that = this;
+                    todos: {
+                        handler: function(todos) {
+                            todoStorage.save(todos);
                         },
-                        todos: {
-                            handler: function(todos) {
-                                todoStorage.save(todos);
-                            },
-                            deep: true
+                        deep: true
+                    }
+                },
+                methods: {
+                    editText() {
+                        this.originalSlogan = this.slogan;
+                        this.isEditing = true;
+                        this.$nextTick(() => {
+                            this.$refs.sloganInput.focus();
+                        });
+                    },
+                    saveText() {
+                        this.isEditing = false;
+                        localStorage.setItem('uiineed-slogan', this.slogan);
+                    },
+                    cancelText() {
+                        this.slogan = this.originalSlogan;
+                        this.isEditing = false;
+                    },
+                    getSlogan() {
+                        return localStorage.getItem('uiineed-slogan') || "Act Now, Simplify Life.☕";
+                    },
+                    contorlScreen: function() {
+                        if (this.windowWidth < 768) {
+                            this.isShow = !this.isShow;
+                            return this.shortCut = 'Filter';
                         }
                     },
-                    methods: {
-                        editText() {
-                            this.originalSlogan = this.slogan;
-                            this.isEditing = true;
-                            this.$nextTick(() => {
-                                this.$refs.sloganInput.focus();
-                            });
-                        },
-                        saveText() {
-                            this.isEditing = false;
-                            localStorage.setItem('uiineed-slogan', this.slogan);
-                        },
-                        cancelText() {
-                            this.slogan = this.originalSlogan;
-                            this.isEditing = false;
-                        },
-                        getSlogan() {
-                            return localStorage.getItem('uiineed-slogan') || "Act Now, Simplify Life.☕";
-                        },
-                        contorlScreen: function() {
-                            if (this.windowWidth < 768) {
-                                this.isShow = !this.isShow;
-                                return this.shortCut = 'Filter';
+                    togglePop: function() {
+                        this.popShow = !this.popShow;
+                    },
+                    shortCutAction: function() {
+                        this.isShow = !this.isShow;
+                        if (this.isShow) {
+                            return this.shortCut = '＝';
+                        } else {
+                            return this.shortCut = 'OPEN✨';
+                        }
+                    },
+                    shuffle: function() {
+                        this.filteredTodos = _.shuffle(this.filteredTodos);
+                    },
+                    addTodo: function(e) {
+                        if (this.newTodoTitle === '') {
+                            this.checkEmpty = true;
+                            return;
+                        }
+                        this.todos.unshift({
+                            id: todoStorage.uid++,
+                            title: this.newTodoTitle,
+                            completed: false,
+                            removed: false
+                        });
+                        this.newTodoTitle = '';
+                        this.checkEmpty = false;
+                        this.delayTime = '0';
+                    },
+                    markAsCompleted: function(todo) {
+                        todo.completed = true;
+                    },
+                    markAsUncompleted: function(todo) {
+                        todo.completed = false;
+                    },
+                    markAllAsCompleted: function() {
+                        confirm('Confirm to mark all as completed?').then((confirmed) => {
+                            if (confirmed) {
+                                this.todos.map(function(todo) {
+                                    if (!todo.completed) todo.completed = true;
+                                });
                             }
-                        },
-                        togglePop: function() {
-                            this.popShow = !this.popShow;
-                        },
-                        shortCutAction: function() {
-                            this.isShow = !this.isShow;
-                            if (this.isShow) {
-                                return this.shortCut = '＝';
-                            } else {
-                                return this.shortCut = 'OPEN✨';
-                            }
-                        },
-                        shuffle: function() {
-                            this.filteredTodos = _.shuffle(this.filteredTodos);
-                        },
-                        addTodo: function(e) {
+                        }); 
+                    },
+
+                    removeTodo: function(todo) {
+                        let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
+                        removedTodo.removed = true;
+                        this.recycleBin.unshift(removedTodo);
+                    },
+                    restoreTodo: function(todo) {
+                        todo.removed = false;
+                        this.todos.unshift(todo);
+                        let pos = this.recycleBin.indexOf(todo);
+                        this.recycleBin.splice(pos, 1);
+                    },
+                    editdTodo: function(todo) {
+                        this.editedTodo = {
+                            id: todo.id,
+                            title: todo.title
+                        }
+                    },
+                    lineFeed: function(event) {
+                        if (event.keyCode == 13 && event.ctrlKey) {
+                            this.newTodoTitle = this.newTodoTitle + '\n';
+                        } else {
                             if (this.newTodoTitle === '') {
                                 this.checkEmpty = true;
                                 return;
@@ -531,272 +594,224 @@
                             this.newTodoTitle = '';
                             this.checkEmpty = false;
                             this.delayTime = '0';
-                        },
-                        markAsCompleted: function(todo) {
-                            todo.completed = true;
-                        },
-                        markAsUncompleted: function(todo) {
-                            todo.completed = false;
-                        },
-                        markAllAsCompleted: function() {
-                            confirm('Confirm to mark all as completed?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.todos.map(function(todo) {
-                                        if (!todo.completed) todo.completed = true;
-                                    });
-                                }
-                            }); 
-                        },
-
-                        removeTodo: function(todo) {
-                            let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
-                            removedTodo.removed = true;
-                            this.recycleBin.unshift(removedTodo);
-                        },
-                        restoreTodo: function(todo) {
-                            todo.removed = false;
-                            this.todos.unshift(todo);
-                            let pos = this.recycleBin.indexOf(todo);
-                            this.recycleBin.splice(pos, 1);
-                        },
-                        editdTodo: function(todo) {
-                            this.editedTodo = {
-                                id: todo.id,
-                                title: todo.title
-                            }
-                        },
-                        lineFeed: function(event) {
-                            if (event.keyCode == 13 && event.ctrlKey) {
-                                this.newTodoTitle = this.newTodoTitle + '\n';
-                            } else {
-                                if (this.newTodoTitle === '') {
-                                    this.checkEmpty = true;
-                                    return;
-                                }
-                                this.todos.unshift({
-                                    id: todoStorage.uid++,
-                                    title: this.newTodoTitle,
-                                    completed: false,
-                                    removed: false
-                                });
-                                this.newTodoTitle = '';
-                                this.checkEmpty = false;
-                                this.delayTime = '0';
-                            }
-                        },
-                        editDone: function(todo) {
-                            if (todo.title === '') {
-                                this.removeTodo(todo);
-                            }
-                            this.editedTodo = null;
-                        },
-                        cancelEdit: function(todo) {
-                            todo.title = this.editedTodo.title;
-                            this.editedTodo = null;
-                        },
-                        clearCompleted: function() {
-                            confirm('Confirm to clear all completed items?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.completedTodos.map(todo => todo.removed = true);
-                                    this.recycleBin.unshift(...this.completedTodos);
-                                    this.todos = this.leftTodos;
-                                }
-                            });
-                        },
-                        clearAll: function() {
-                            confirm('Confirm to clear all todo items?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.todos.map(todo => todo.removed = true);
-                                    this.recycleBin.unshift(...this.todos);
-                                    this.todos = [];
-                                }
-                            });
-                        },
-
-                        // Drag Operations
-                        dragstart: function(index) {
-                            this.dragIndex = index;
-                        },
-                        dragenter: function(e, index) {
-                            e.preventDefault();
-                            // Avoid source object triggering its own dragenter event
-                            if (this.dragIndex !== index) {
-                                const source = this.filteredTodos[this.dragIndex];
-                                this.filteredTodos.splice(this.dragIndex, 1);
-                                this.filteredTodos.splice(index, 0, source);
-                                // After reordering, target index becomes source index
-                                this.dragIndex = index;
-                            }
-                        },
-                        dragover: function(e, index) {
-                            e.preventDefault();
-                        },
-                        // JS hooks for animation
-                        beforeEnter(dom) {
-                            dom.classList.add('drag-enter-active');
-                        },
-                        enter(dom, done) {
-                            let delay = dom.dataset.delay;
-                            setTimeout(() => {
-                                this.delayTime = '1';
-                                dom.classList.remove('drag-enter-active');
-                                dom.classList.add('drag-enter-to');
-                                let transitionend = window.ontransitionend
-                                    ? "transitionend"
-                                    : "webkitTransitionEnd";
-                                dom.addEventListener(transitionend, function onEnd() {
-                                    dom.removeEventListener(transitionend, onEnd);
-                                    done();
-                                    // Call done() to tell Vue animation is complete, triggering afterEnter hook
-                                })
-                            }, delay);
-                        },
-                        afterEnter(dom) {
-                            dom.classList.remove('drag-enter-to');
-                        },
-                    },
-
-                    mounted() {
-                        this.show = true;
-                        var that = this;
-                        this.contorlScreen();
-                        // Attach window.onresize event to mounted function
-                        window.onresize = () => {
-                            return (() => {
-                                window.fullWidth = document.documentElement.clientWidth;
-                                that.windowWidth = window.fullWidth; // width
-                            })()
-                        };
-                    },
-
-                    directives: {
-                        focus: {
-                            inserted: function(el) {
-                                el.focus()
-                            }
                         }
                     },
-
-                    computed: {
-                        emptyChecked: function() {
-                            return this.newTodoTitle.length === 0 && this.checkEmpty
-                        },
-                        leftTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return !todo.completed
-                            })
-                        },
-                        leftTodosCount: function() {
-                            return this.leftTodos.length
-                        },
-                        hasRemovedTodo: function() {
-                            return !!this.removedTodo
-                        },
-                        completedTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return todo.completed
-                            })
-                        },
-                        completedTodosCount: function() {
-                            return this.completedTodos.length
-                        },
-                        filteredTodos: function() {
-                            if (this.intention === 'ongoing') {
-                                return this.leftTodos
-                            } else if (this.intention === 'completed') {
-                                return this.completedTodos
-                            } else if (this.intention === 'removed') {
-                                return this.recycleBin
-                            } else {
-                                return this.todos
-                            }
-                        },
-                        showEmptyTips() {
-                            return this.filteredTodos.length === 0 && this.intention !== 'removed';
+                    editDone: function(todo) {
+                        if (todo.title === '') {
+                            this.removeTodo(todo);
                         }
-                    }
-                    })
-            </script>
-            <script>
-                // Fetch data from localStorage
-                var fetchedTodos = todoStorage.fetch();
-
-                const handleClickDownload = () => {
-                    const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
-                    const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
-                    const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
-                    
-                    const element = document.createElement('a');
-                    element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
-                    element.download = fileName;
-                    
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                };
-
-                // Import file
-                let tempFileInput = null; // Store dynamically created file input element
-                document.getElementById('import').addEventListener('click', function() {
-                    if (!tempFileInput) {
-                        tempFileInput = document.createElement('input');
-                        tempFileInput.type = 'file';
-                        tempFileInput.accept = '.txt,.json';
-                        tempFileInput.style.display = 'none';
-                        this.parentNode.appendChild(tempFileInput);
-
-                        tempFileInput.addEventListener('change', function(event) {
-                            var file = event.target.files[0];
-                            if (!file) return alert('No file selected!', 'Error');
-                            var reader = new FileReader();
-                            reader.onload = function(e) {
-                                var content = e.target.result;
-                                try {
-                                    var importedData;
-                                    if (file.type === 'application/json') {
-                                        // If JSON file, parse directly
-                                        importedData = JSON.parse(content);
-                                    } else if (file.type === 'text/plain') {
-                                        // If TXT file, try to parse as JSON
-                                        importedData = JSON.parse(content.trim());
-                                    } else {
-                                        throw new Error('Unsupported file type');
-                                    }
-                                    // Get current data from localStorage
-                                    var currentTodos = todoStorage.fetch() || [];
-                                    // Get current data count for new unique ids
-                                    var nextIdIndex = currentTodos.length;
-                                    // Update ids for imported data
-                                    importedData.forEach((item, index) => {
-                                        item.id = nextIdIndex + index;
-                                    });
-                                    // Append imported data to existing data
-                                    var updatedTodos = currentTodos.concat(importedData);
-                                    // Update localStorage
-                                    todoStorage.save(updatedTodos);
-                                    // Update page content
-                                    updatePageContent(updatedTodos);
-                                    alert('File imported successfully, data has been appended!');
-                                } catch (error) {
-                                    alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
-                                }
-                            };
-                            reader.onerror = function(e) {
-                                alert('Error reading file: ' + e.target.error.name, 'Error');
-                            };
-                            reader.readAsText(file);
-                            this.parentNode.removeChild(tempFileInput);
-                            tempFileInput = null;
+                        this.editedTodo = null;
+                    },
+                    cancelEdit: function(todo) {
+                        todo.title = this.editedTodo.title;
+                        this.editedTodo = null;
+                    },
+                    clearCompleted: function() {
+                        confirm('Confirm to clear all completed items?').then((confirmed) => {
+                            if (confirmed) {
+                                this.completedTodos.map(todo => todo.removed = true);
+                                this.recycleBin.unshift(...this.completedTodos);
+                                this.todos = this.leftTodos;
+                            }
                         });
+                    },
+                    clearAll: function() {
+                        confirm('Confirm to clear all todo items?').then((confirmed) => {
+                            if (confirmed) {
+                                this.todos.map(todo => todo.removed = true);
+                                this.recycleBin.unshift(...this.todos);
+                                this.todos = [];
+                            }
+                        });
+                    },
+
+                    // Drag Operations
+                    dragstart: function(index) {
+                        this.dragIndex = index;
+                    },
+                    dragenter: function(e, index) {
+                        e.preventDefault();
+                        // Avoid source object triggering its own dragenter event
+                        if (this.dragIndex !== index) {
+                            const source = this.filteredTodos[this.dragIndex];
+                            this.filteredTodos.splice(this.dragIndex, 1);
+                            this.filteredTodos.splice(index, 0, source);
+                            // After reordering, target index becomes source index
+                            this.dragIndex = index;
+                        }
+                    },
+                    dragover: function(e, index) {
+                        e.preventDefault();
+                    },
+                    // JS hooks for animation
+                    beforeEnter(dom) {
+                        dom.classList.add('drag-enter-active');
+                    },
+                    enter(dom, done) {
+                        let delay = dom.dataset.delay;
+                        setTimeout(() => {
+                            this.delayTime = '1';
+                            dom.classList.remove('drag-enter-active');
+                            dom.classList.add('drag-enter-to');
+                            let transitionend = window.ontransitionend
+                                ? "transitionend"
+                                : "webkitTransitionEnd";
+                            dom.addEventListener(transitionend, function onEnd() {
+                                dom.removeEventListener(transitionend, onEnd);
+                                done();
+                                // Call done() to tell Vue animation is complete, triggering afterEnter hook
+                            })
+                        }, delay);
+                    },
+                    afterEnter(dom) {
+                        dom.classList.remove('drag-enter-to');
+                    },
+                    saveLanguage(lang) {
+                        localStorage.setItem('uiineed-todos-lang', lang);
                     }
-                    tempFileInput.click();
-                });
+                },
 
-                function updatePageContent(data) {
-                    app.todos = data;
+                mounted() {
+                    this.show = true;
+                    var that = this;
+                    this.contorlScreen();
+                    // Attach window.onresize event to mounted function
+                    window.onresize = () => {
+                        return (() => {
+                            window.fullWidth = document.documentElement.clientWidth;
+                            that.windowWidth = window.fullWidth; // width
+                        })()
+                    };
+                },
+
+                directives: {
+                    focus: {
+                        inserted: function(el) {
+                            el.focus()
+                        }
+                    }
+                },
+
+                computed: {
+                    emptyChecked: function() {
+                        return this.newTodoTitle.length === 0 && this.checkEmpty
+                    },
+                    leftTodos: function() {
+                        return this.todos.filter(function(todo) {
+                            return !todo.completed
+                        })
+                    },
+                    leftTodosCount: function() {
+                        return this.leftTodos.length
+                    },
+                    hasRemovedTodo: function() {
+                        return !!this.removedTodo
+                    },
+                    completedTodos: function() {
+                        return this.todos.filter(function(todo) {
+                            return todo.completed
+                        })
+                    },
+                    completedTodosCount: function() {
+                        return this.completedTodos.length
+                    },
+                    filteredTodos: function() {
+                        if (this.intention === 'ongoing') {
+                            return this.leftTodos
+                        } else if (this.intention === 'completed') {
+                            return this.completedTodos
+                        } else if (this.intention === 'removed') {
+                            return this.recycleBin
+                        } else {
+                            return this.todos
+                        }
+                    },
+                    showEmptyTips() {
+                        return this.filteredTodos.length === 0 && this.intention !== 'removed';
+                    }
                 }
+                })
+        </script>
+        <script>
+            // Fetch data from localStorage
+            var fetchedTodos = todoStorage.fetch();
 
-            </script>
+            const handleClickDownload = () => {
+                const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
+                const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
+                const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
+                
+                const element = document.createElement('a');
+                element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
+                element.download = fileName;
+                
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            };
+
+            // Import file
+            let tempFileInput = null; // Store dynamically created file input element
+            document.getElementById('import').addEventListener('click', function() {
+                if (!tempFileInput) {
+                    tempFileInput = document.createElement('input');
+                    tempFileInput.type = 'file';
+                    tempFileInput.accept = '.txt,.json';
+                    tempFileInput.style.display = 'none';
+                    this.parentNode.appendChild(tempFileInput);
+
+                    tempFileInput.addEventListener('change', function(event) {
+                        var file = event.target.files[0];
+                        if (!file) return alert('No file selected!', 'Error');
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var content = e.target.result;
+                            try {
+                                var importedData;
+                                if (file.type === 'application/json') {
+                                    // If JSON file, parse directly
+                                    importedData = JSON.parse(content);
+                                } else if (file.type === 'text/plain') {
+                                    // If TXT file, try to parse as JSON
+                                    importedData = JSON.parse(content.trim());
+                                } else {
+                                    throw new Error('Unsupported file type');
+                                }
+                                // Get current data from localStorage
+                                var currentTodos = todoStorage.fetch() || [];
+                                // Get current data count for new unique ids
+                                var nextIdIndex = currentTodos.length;
+                                // Update ids for imported data
+                                importedData.forEach((item, index) => {
+                                    item.id = nextIdIndex + index;
+                                });
+                                // Append imported data to existing data
+                                var updatedTodos = currentTodos.concat(importedData);
+                                // Update localStorage
+                                todoStorage.save(updatedTodos);
+                                // Update page content
+                                updatePageContent(updatedTodos);
+                                alert('File imported successfully, data has been appended!');
+                            } catch (error) {
+                                alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
+                            }
+                        };
+                        reader.onerror = function(e) {
+                            alert('Error reading file: ' + e.target.error.name, 'Error');
+                        };
+                        reader.readAsText(file);
+                        this.parentNode.removeChild(tempFileInput);
+                        tempFileInput = null;
+                    });
+                }
+                tempFileInput.click();
+            });
+
+            function updatePageContent(data) {
+                app.todos = data;
+            }
+
+        </script>
     </body>
 
 </html>
