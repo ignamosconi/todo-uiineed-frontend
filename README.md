@@ -3,6 +3,7 @@ El objetivo de este fork es añadir la capacidad de que los usuarios puedan crea
 Esto surge de la necesidad de acceder a la página web desde múltiples dispositivos, pero manteniendo su naturaleza de "no log-in" (ergo, la página no tendrá usuarios).
 
 → Este proyecto es un fork de uiineed-todo-list por @ricocc, bajo licencia MIT
+<br/>
 → Repositorio original: https://github.com/ricocc/uiineed-todo-list
 
 A continuación se muestra el readme del proyecto original, en inglés
