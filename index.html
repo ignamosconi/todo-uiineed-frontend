@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+        <script src="config.js"></script>
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,11 +32,11 @@
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-<div class="custom-alert-title">${title}</div>
-<div class="custom-alert-content">${message}</div>
-<div class="custom-alert-buttons">
-    <button class="custom-alert-btn confirm">OK</button>
-</div>
+                        <div class="custom-alert-title">${title}</div>
+                        <div class="custom-alert-content">${message}</div>
+                        <div class="custom-alert-buttons">
+                            <button class="custom-alert-btn confirm">OK</button>
+                        </div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -61,12 +62,12 @@
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-<div class="custom-alert-title">${title}</div>
-<div class="custom-alert-content">${message}</div>
-<div class="custom-alert-buttons">
-    <button class="custom-alert-btn cancel">Cancel</button>
-    <button class="custom-alert-btn confirm">OK</button>
-</div>
+                        <div class="custom-alert-title">${title}</div>
+                        <div class="custom-alert-content">${message}</div>
+                        <div class="custom-alert-buttons">
+                            <button class="custom-alert-btn cancel">Cancel</button>
+                            <button class="custom-alert-btn confirm">OK</button>
+                        </div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -154,7 +155,7 @@
                                 class="btn btn-label btn-allFinish"
                                 value="Mark All Done"
                                 @click="markAllAsCompleted"
-                                v-if="todos.length || recycleBin.length"/>
+                                v-if="todos.length"/>
                             <template>
                                 <div>
                                     <div v-if="!isEditing" @dblclick="editText" class="bar-message-text">
@@ -182,7 +183,6 @@
                             <li>✔️ Drag to reorder your to-dos (PC only)</li>
                             <li>✔️ Double-click to edit slogan and tasks.</li>
                             <li>✔️ Access quick actions in the right sidebar.</li>
-                            <li>🔒 Your data is stored locally in your browser.</li>
                             <li>📝 Supports data download and import.
                             </li>
                         </ul>
@@ -284,7 +284,7 @@
                         </div>
                         <div class="todo-footer-box">
                             <ul class="todo-func-list filter">
-                                <!-- <li v-if="todos.length || recycleBin.length">Filter：</li> -->
+                                <!-- <li v-if="todos.length">Filter：</li> -->
                                 <!-- <li v-if="hasRemovedTodo" ><input type="button" value="Back"
                                 v-if="hasRemovedTodo" @click="restoreTodo()"></li> -->
                                 <li >
@@ -310,11 +310,10 @@
                                         :class="{selected: intention === 'completed'}"
                                         @click="intention='completed'">
                                 </li>
-                                <li v-if="recycleBin.length">
+                                <li v-if="todos.some(t => t.removed)">
                                     <input
                                         class="btn-small action-deleted"
                                         type="button"
-                                        v-if="recycleBin.length"
                                         :class="{selected: intention === 'removed'}"
                                         value="Trash"
                                         @click="intention='removed'"/>
@@ -346,23 +345,7 @@
                                 </li>
                             </ul>
                             <ul class="todo-func-list datasave">
-                                <li v-if="leftTodosCount">
-                                    <input
-                                        type="button"
-                                        value="Export data"
-                                        class="btn-small  action-download"
-                                        id="download"
-                                        onclick="handleClickDownload()"></input>
-                                </li>
-                                <li>
-                                    <input
-                                        value="Import(txt/json)"
-                                        type="button"
-                                        class="btn-small action-import"
-                                        id="import"/>
-                                    <!-- <input type="file" id="import-file" accept=".txt,.json"
-                                    style="display:none"> -->
-                                </li>
+
                             </ul>
 
                         </div>
@@ -437,35 +420,24 @@
 
             </div>
         </div>
+
         <script>
-            // localStorage operations
-            var STORAGE_KEY = 'uiineed-todos';
-            var todoStorage = {
-                fetch: function() {
-                    var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                    todos.forEach(function(todo, index) {
-                        todo.id = index;
-                    });
-                    todoStorage.uid = todos.length;
-                    return todos;
-                },
-                save: function(todos) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-                }
+            function getListUrl() {
+                const params = new URLSearchParams(window.location.search);
+                return params.get('list');
             }
-        </script>
-        <script>
+
             // Vue instance initialization
             var app = new Vue({
                 el: '#todo-app',
                 data: function() {
                     return {
-                        todos: todoStorage.fetch(),
+                        todos: [],
+                        listUrl: getListUrl(),
                         newTodoTitle: '',
                         editedTodo: null,
                         intention: 'all', // Default: all
                         checkEmpty: false,
-                        recycleBin: [],
                         dragIndex: '',
                         enterIndex: '',
                         show: true,
@@ -474,22 +446,12 @@
                         shortCut: 'OPEN✨',
                         popShow: true,
                         windowWidth: document.documentElement.clientWidth,
-                        slogan: this.getSlogan(),
+                        slogan: localStorage.getItem('uiineed-slogan') || "Have a nice day :)",
                         isEditing: false,
                         originalSlogan: ""
                     };
                 },
-                watch: {
-                    windowWidth(val) {
-                        let that = this;
-                    },
-                    todos: {
-                        handler: function(todos) {
-                            todoStorage.save(todos);
-                        },
-                        deep: true
-                    }
-                },
+
                 methods: {
                     editText() {
                         this.originalSlogan = this.slogan;
@@ -498,9 +460,20 @@
                             this.$refs.sloganInput.focus();
                         });
                     },
+                    fetchTodos() {
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                this.todos = data.map(t => ({
+                                    id: t.id,
+                                    title: t.name,
+                                    completed: t.status === 'completed',
+                                    removed: t.status === 'eliminated'
+                                }));
+                            });
+                    },
                     saveText() {
                         this.isEditing = false;
-                        localStorage.setItem('uiineed-slogan', this.slogan);
                     },
                     cancelText() {
                         this.slogan = this.originalSlogan;
@@ -534,66 +507,60 @@
                             this.checkEmpty = true;
                             return;
                         }
-                        this.todos.unshift({
-                            id: todoStorage.uid++,
-                            title: this.newTodoTitle,
-                            completed: false,
-                            removed: false
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name: this.newTodoTitle })
+                        })
+                        .then(() => {
+                            this.fetchTodos();
                         });
                         this.newTodoTitle = '';
                         this.checkEmpty = false;
                         this.delayTime = '0';
                     },
                     markAsCompleted: function(todo) {
-                        todo.completed = true;
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/${todo.id}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'completed' })
+                        }).then(() => this.fetchTodos());
                     },
                     markAsUncompleted: function(todo) {
-                        todo.completed = false;
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/${todo.id}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'created' })
+                        }).then(() => this.fetchTodos());
                     },
                     markAllAsCompleted: function() {
                         confirm('Confirm to mark all as completed?').then((confirmed) => {
                             if (confirmed) {
-                                this.todos.map(function(todo) {
-                                    if (!todo.completed) todo.completed = true;
-                                });
+                                fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/complete-all`, {
+                                    method: 'POST'
+                                }).then(() => this.fetchTodos());
                             }
                         }); 
                     },
 
                     removeTodo: function(todo) {
-                        let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
-                        removedTodo.removed = true;
-                        this.recycleBin.unshift(removedTodo);
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/${todo.id}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'eliminated' })
+                        }).then(() => this.fetchTodos());
                     },
                     restoreTodo: function(todo) {
-                        todo.removed = false;
-                        this.todos.unshift(todo);
-                        let pos = this.recycleBin.indexOf(todo);
-                        this.recycleBin.splice(pos, 1);
+                        fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/${todo.id}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ status: 'created' })
+                        }).then(() => this.fetchTodos());
                     },
                     editdTodo: function(todo) {
                         this.editedTodo = {
                             id: todo.id,
                             title: todo.title
-                        }
-                    },
-                    lineFeed: function(event) {
-                        if (event.keyCode == 13 && event.ctrlKey) {
-                            this.newTodoTitle = this.newTodoTitle + '\n';
-                        } else {
-                            if (this.newTodoTitle === '') {
-                                this.checkEmpty = true;
-                                return;
-                            }
-                            this.todos.unshift({
-                                id: todoStorage.uid++,
-                                title: this.newTodoTitle,
-                                completed: false,
-                                removed: false
-                            });
-                            this.newTodoTitle = '';
-                            this.checkEmpty = false;
-                            this.delayTime = '0';
                         }
                     },
                     editDone: function(todo) {
@@ -606,21 +573,34 @@
                         todo.title = this.editedTodo.title;
                         this.editedTodo = null;
                     },
+
+                    //En el back habría que implementar un POST clear-completed. Como no lo tengo, trabajamos con /status.
                     clearCompleted: function() {
                         confirm('Confirm to clear all completed items?').then((confirmed) => {
-                            if (confirmed) {
-                                this.completedTodos.map(todo => todo.removed = true);
-                                this.recycleBin.unshift(...this.completedTodos);
-                                this.todos = this.leftTodos;
-                            }
+                            if (!confirmed) return;
+
+                            const requests = this.completedTodos.map(todo => {
+                                return fetch(
+                                    `${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/${todo.id}/status`,
+                                    {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ status: 'eliminated' })
+                                    }
+                                );
+                            });
+
+                            Promise.all(requests).then(() => {
+                                this.fetchTodos();
+                            });
                         });
                     },
                     clearAll: function() {
                         confirm('Confirm to clear all todo items?').then((confirmed) => {
                             if (confirmed) {
-                                this.todos.map(todo => todo.removed = true);
-                                this.recycleBin.unshift(...this.todos);
-                                this.todos = [];
+                                fetch(`${window.APP_CONFIG.API_URL}/todos/${this.listUrl}/clear-all`, {
+                                    method: 'POST'
+                                }).then(() => this.fetchTodos());
                             }
                         });
                     },
@@ -672,8 +652,25 @@
                 },
 
                 mounted() {
+                    if (!this.listUrl) {
+                        fetch(`${window.APP_CONFIG.API_URL}/lists`, {
+                            method: 'POST'
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            window.location.search = `?list=${data.url}`;
+                        });
+                        return;
+                    }
+                    this.fetchTodos();
                     this.show = true;
                     var that = this;
+
+                    //Real time updates
+                    setInterval(() => {
+                        this.fetchTodos();
+                    }, 3000);
+                    
                     this.contorlScreen();
                     // Attach window.onresize event to mounted function
                     window.onresize = () => {
@@ -705,7 +702,7 @@
                         return this.leftTodos.length
                     },
                     hasRemovedTodo: function() {
-                        return !!this.removedTodo
+                        return this.todos.some(t => t.removed);
                     },
                     completedTodos: function() {
                         return this.todos.filter(function(todo) {
@@ -721,7 +718,7 @@
                         } else if (this.intention === 'completed') {
                             return this.completedTodos
                         } else if (this.intention === 'removed') {
-                            return this.recycleBin
+                            return this.todos.filter(t => t.removed)
                         } else {
                             return this.todos
                         }
@@ -731,86 +728,6 @@
                     }
                 }
                 })
-        </script>
-        <script>
-            // Fetch data from localStorage
-            var fetchedTodos = todoStorage.fetch();
-
-            const handleClickDownload = () => {
-                const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
-                const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
-                const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
-                
-                const element = document.createElement('a');
-                element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
-                element.download = fileName;
-                
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-            };
-
-            // Import file
-            let tempFileInput = null; // Store dynamically created file input element
-            document.getElementById('import').addEventListener('click', function() {
-                if (!tempFileInput) {
-                    tempFileInput = document.createElement('input');
-                    tempFileInput.type = 'file';
-                    tempFileInput.accept = '.txt,.json';
-                    tempFileInput.style.display = 'none';
-                    this.parentNode.appendChild(tempFileInput);
-
-                    tempFileInput.addEventListener('change', function(event) {
-                        var file = event.target.files[0];
-                        if (!file) return alert('No file selected!', 'Error');
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            var content = e.target.result;
-                            try {
-                                var importedData;
-                                if (file.type === 'application/json') {
-                                    // If JSON file, parse directly
-                                    importedData = JSON.parse(content);
-                                } else if (file.type === 'text/plain') {
-                                    // If TXT file, try to parse as JSON
-                                    importedData = JSON.parse(content.trim());
-                                } else {
-                                    throw new Error('Unsupported file type');
-                                }
-                                // Get current data from localStorage
-                                var currentTodos = todoStorage.fetch() || [];
-                                // Get current data count for new unique ids
-                                var nextIdIndex = currentTodos.length;
-                                // Update ids for imported data
-                                importedData.forEach((item, index) => {
-                                    item.id = nextIdIndex + index;
-                                });
-                                // Append imported data to existing data
-                                var updatedTodos = currentTodos.concat(importedData);
-                                // Update localStorage
-                                todoStorage.save(updatedTodos);
-                                // Update page content
-                                updatePageContent(updatedTodos);
-                                alert('File imported successfully, data has been appended!');
-                            } catch (error) {
-                                alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
-                            }
-                        };
-                        reader.onerror = function(e) {
-                            alert('Error reading file: ' + e.target.error.name, 'Error');
-                        };
-                        reader.readAsText(file);
-                        this.parentNode.removeChild(tempFileInput);
-                        tempFileInput = null;
-                    });
-                }
-                tempFileInput.click();
-            });
-
-            function updatePageContent(data) {
-                app.todos = data;
-            }
-
         </script>
     </body>
 
