@@ -100,6 +100,9 @@
 
 
     <body>
+        <!--
+            COLOR DE FONDO
+        -->
         <div class="bg-pattern"></div>
 
         <!-- 
@@ -196,7 +199,7 @@
                     </div> 
                 </div>
 
-                <!-- TODO LIST -->
+                <!-- APP TODO LIST -->
                 <div class="container main">
 
                     <!-- MAIN BOX -->
@@ -425,7 +428,12 @@
 
             </div>
 
+            <!--  
+                ### SCRIPT 1 ###
+                Funciones de LocalStorage 
 
+                TODO: Debe cambiarse a conexión con base de datos (interna → externa) 
+            -->
             <script>
                 // localStorage operations
                 var STORAGE_KEY = 'uiineed-todos';
@@ -444,6 +452,12 @@
                 }
             </script>
             
+            <!--  
+                ### SCRIPT 2 ###
+                Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
+                
+                TODO: Cambiar "watch" y "methods" por los usados en el backend.
+            -->
             <script>
                 // Vue instance initialization
                 var app = new Vue({
@@ -719,6 +733,13 @@
                     }
                     })
             </script>
+
+            <!--  
+                ### SCRIPT 3 ###
+                Exportación e importación de JSONs de TODOs. 
+
+                TODO: Definir si esta funcionalidad se queda o se va.
+            -->
             <script>
                 // Fetch data from localStorage
                 var fetchedTodos = todoStorage.fetch();
