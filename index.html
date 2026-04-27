@@ -457,6 +457,9 @@
                 Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
                 
                 TODO: Cambiar "watch" y "methods" por los usados en el backend.
+                
+                Las siguientes funciones deberían quedarse en local storage:
+                getSlogan()
             -->
             <script>
                 // Vue instance initialization
@@ -511,7 +514,7 @@
                             this.isEditing = false;
                         },
                         getSlogan() {
-                            return localStorage.getItem('uiineed-slogan') || "Act Now, Simplify Life.☕";
+                            return localStorage.getItem('uiineed-slogan') || "Edit this section or the TODOs names with double-click :)";
                         },
                         contorlScreen: function() {
                             if (this.windowWidth < 768) {
