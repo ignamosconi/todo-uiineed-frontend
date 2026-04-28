@@ -527,7 +527,8 @@
 
                     const data = await res.json();
                     state.listUrl = url;
-
+                    console.log("cargando todos..")
+                    console.log(data)
                     return data
                 }
             </script>
@@ -679,7 +680,7 @@
                 TODO: Cambiar "watch" y "methods" por los usados en el backend.
                 
                 Las siguientes funciones deberían quedarse en local storage:
-                getSlogan()
+                getSlogan().
             -->
             <script>
                 // Vue instance initialization
@@ -976,7 +977,7 @@
 
 
             <!--  
-                ### SCRIPT 3 ###
+                ### SCRIPT 5 ###
                 Exportación e importación de JSONs de TODOs. 
 
                 TODO: Definir si esta funcionalidad se queda o se va.
