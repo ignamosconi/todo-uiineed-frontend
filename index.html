@@ -632,14 +632,14 @@
                         },
                         saveText() {
                             this.isEditing = false;
-                            localStorage.setItem('uiineed-slogan', this.slogan);
+                            localStorage.setItem('page-slogan', this.slogan);
                         },
                         cancelText() {
                             this.slogan = this.originalSlogan;
                             this.isEditing = false;
                         },
                         getSlogan() {
-                            return localStorage.getItem('uiineed-slogan') || "Edit this title or the TODOs names with double-click :)";
+                            return localStorage.getItem('page-slogan') || "Edit this title or the TODOs names with double-click :)";
                         },
                         contorlScreen: function() {
                             if (this.windowWidth < 768) {
@@ -861,6 +861,26 @@
                     }
                     })
             </script>
+
+            <!--  ############ BORRAR - EXPERIMENTO ############-->
+            <script>
+                // localStorage operations
+                var STORAGE_KEY = 'uiineed-todos';
+                var todoStorage = {
+                    fetch: function() {
+                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                        todos.forEach(function(todo, index) {
+                            todo.id = index;
+                        });
+                        todoStorage.uid = todos.length;
+                        return todos;
+                    },
+                    save: function(todos) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+                    }
+                }
+            </script>
+
 
             <!--  
                 ### SCRIPT 3 ###
