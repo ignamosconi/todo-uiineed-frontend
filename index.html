@@ -514,7 +514,7 @@
                 //Auxiliar 3
                 async function loadTodos(url) {
                     const res = await api.getTodos(url);
-
+                    
                     if (res.status === 404) {
                         showListNotFound(url);
                         return null;
@@ -553,25 +553,24 @@
                 };
             </script>
             
-            <!--  
+
+            <!-- 
                 ### SCRIPT 3 ###
-                Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
-                
-                TODO: Cambiar "watch" y "methods" por los usados en el backend.
-                
-                Las siguientes funciones deberían quedarse en local storage:
-                getSlogan()
+                Definimos la constante "api", que realizará los feteches al backend. 
+
+                Este código NO MANEJA ERRORES (por ejemplo un cartel de alerta ante un fallo), ya que esto es una 
+                funcionalidad del frontend. 
             -->
             <script>
-                //API NO MANEJA ERRORES, ESO LO HACE EL FRONT CON ALERTS.
                 const api = {
+                    //Definimos la url del backend
                     base: window.APP_CONFIG.API_URL,
 
                     /*
                         MÉTODOS MÓDULO "LISTS"
                     */
                     async createList() {
-                        return await fetch(`${this.base}/lists`, { method: "POST"});
+                        return fetch(`${this.base}/lists`, { method: "POST"});
                     },
 
                     //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
@@ -580,15 +579,109 @@
                     /*
                         MÉTODOS MÓDULO "TODOs"
                     */
-                    async getTodos(url) {
-                        return fetch(`${this.base}/todos/${url}`);                        
+
+                    //Si no pasamos el parámetro status, se obtienen 'todos' con status "created" y "completed", siempre y cuando isEliminated = false. 
+                    //Si pasamos el parámetro status = created o status = completed, se filtra solo por eso. 
+                    async getTodos(url, status) {
+                        const query = status ? `?status=${status}` : "";
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}${query}`);                      
+                    },
+
+                    //Agregar todo
+                    async addTodo(url, todoName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                name: todoName
+                            })
+                        });
+                    },
+
+                    //Obtener todos con isEliminated = true (los que están en trash)
+                    async getTrash(url) {
+                        return fetch(`${this.base}/todos/${url}/trash`, {method: "GET"})
+                    },
+
+                    //Actualizar status a "created" o "completed"
+                    async updateStatus(url, id, statusName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/status`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                status: statusName
+                            })
+                        })
+                    },
+
+                    //Actualizar name de todo (se hace con doble click en el front)
+                    async updateName(url, id, todoName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/name`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                name: todoName
+                            })
+                        })
+                    },
+
+                    //Actualizar isEliminated de todo (define si se muestra en trash o no)
+                    async updateIsEliminated(url, id, todoIsEliminated) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/is-eliminated`, { 
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                isEliminated: todoIsEliminated
+                            })
+                        })
+                    },
+
+                    //Marcar a todos los 'todos' como status = completed, siempre y cuando isEliminated = false.
+                    async completeAll(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/complete-all`, {method: "PATCH"})
+                    },
+
+                    //Pasar a todos los 'todos' con status = completed a trash, es decir pasar su isEliminated a true.
+                    async clearCompleted(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-completed`, {method: "PATCH"})
+                    }, 
+
+                    //Pasar todos los 'todos' con status: created o status: completed a trash (es decir, pasar su isEliminated a true)
+                    async clearAll(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-all`, {method: "PATCH"})                        
+                    },
+
+                    //Pasar todos los 'todos' con isEliminated: false a isEliminated:true, manteniendo su estado anterior a ser eliminados.
+                    async restoreTrash(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/restore-trash`, {method: "PATCH"})  
+                    },
+
+                    //Eliminar de la bd todo lo que esté en trash
+                    async clearTrash(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-trash`, {method: "DELETE"})  
                     }
 
                 }
+            </script>    
 
-                //Completar con resto de métodos
-
-
+            <!--  
+                ### SCRIPT 4 ###
+                Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
+                
+                TODO: Cambiar "watch" y "methods" por los usados en el backend.
+                
+                Las siguientes funciones deberían quedarse en local storage:
+                getSlogan()
+            -->
+            <script>
                 // Vue instance initialization
                 var app = new Vue({
                     el: '#todo-app',
