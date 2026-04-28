@@ -94,7 +94,11 @@
                 });
             };
         </script>
+
+        <!-- 3. INICIALIZACIÓN DE APP -->
+        <!-- Cargamos los scripts -->
         <script src="public/js/vue.js"></script>
+        <script src="public/js/config.js"></script>
     </head>
 
 
@@ -431,30 +435,126 @@
 
             <!--  
                 ### SCRIPT 1 ###
-                Funciones de LocalStorage 
-
-                TODO: Debe cambiarse a conexión con base de datos (interna → externa) 
+                Inicialización
             -->
             <script>
-                // localStorage operations
-                var STORAGE_KEY = 'uiineed-todos';
-                var todoStorage = {
-                    fetch: function() {
-                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                        todos.forEach(function(todo, index) {
-                            todo.id = index;
-                        });
-                        todoStorage.uid = todos.length;
-                        return todos;
-                    },
-                    save: function(todos) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+                async function initApp() {
+
+                    //Detectamos la URL actual.
+                    const path = window.location.pathname;
+
+                    /*
+                    CASO 1: El usuario entra a ROOT_FRONT/ (es decir, la página principal) y no hay ninguna
+                    list_url guardada en localstorage, por lo que vamos a crearle una nueva lista y 
+                    asignarle una url_lista, con [POST] ROOT_BACK/lists.
+
+                    Tras crear la lista, el usuario será redirigido a ROOT_FRONT/url_lista, que va a cargar los 
+                    datos de [GET] ROOT_BACK/todos/url_lista. 
+
+                    La list_url creada se asigna al localstorage.
+                    */
+                    if (path === "/") {
+                        if (!state.listUrl) {
+                            return createFlow();
+                        }
+                        
+                        /*
+                        CASO 3: El usuario ingresa a ROOT_FRONT y ya existe una list_url guardada en 
+                        localstorage, por lo que se redirecciona a esa list_url con  ROOT_FRONT/list_url, 
+                        como se analizó en el paso 1.
+                        */
+                        window.history.replaceState({}, "", `/${state.listUrl}`);
+                        return loadTodos(state.listUrl);
+                    }
+
+                    /*
+                    CASO 2: El usuario entra a ROOT_FRONT/:url_lista, porque en otra sesión ya creó una lista y 
+                    guardó su URL para usarla después. El endpoint [GET] ROOT_BACK/todos/:url_lista ya valida si la lista existe.
+                    De ser así, cargamos los datos de [GET] ROOT_BACK/todos/:url_lista.
+
+                    Si la url_lista no existe, el front muestra un cartel que dice "Esa lista no existe. Presiona "ok" para crear
+                    una nueva (el único botón disponible). Tras seleccionar ok, se ejecuta el flujo del caso 1.
+                    */
+                   const url = path.slice(1); 
+
+                   const data = await loadTodos(url);
+                   return data;
+                }
+
+                //Auxiliar 1
+                function showListNotFound(url) {
+                    const ok = confirm(
+                        "Esa lista no existe. Presiona OK para crear una nueva."
+                    );
+
+                    if (ok) {
+                        state.clear();
+                        createFlow();
                     }
                 }
+
+                //Auxiliar 2
+                async function createFlow() {
+                    const res = await api.createList();
+
+                    if (!res.ok) {
+                        alert("Error creando lista");
+                        return;
+                    }
+
+                    const data = await res.json();
+
+                    state.listUrl = data.url;
+
+                    window.history.replaceState({}, "", `/${data.url}`);
+
+                    return loadTodos(data.url);
+                }
+
+                //Auxiliar 3
+                async function loadTodos(url) {
+                    const res = await api.getTodos(url);
+
+                    if (res.status === 404) {
+                        showListNotFound(url);
+                        return null;
+                    }
+
+                    if (!res.ok) {
+                        alert("Error cargando lista");
+                        return;
+                    }
+
+                    const data = await res.json();
+                    state.listUrl = url;
+
+                    return data
+                }
+            </script>
+
+            <!--  
+                ### SCRIPT 2 ###
+                Almacenamiento de URL de forma local (permite que con conectarse a ROOT_FRONT se 
+                pueda redirigir a la última lista creada)
+            -->
+            <script>
+                const state = {
+                    get listUrl() {
+                        return localStorage.getItem("list_url");
+                    },
+
+                    set listUrl(value) {
+                        localStorage.setItem("list_url", value);
+                    },
+
+                    clear() {
+                        localStorage.removeItem("list_url");
+                    }
+                };
             </script>
             
             <!--  
-                ### SCRIPT 2 ###
+                ### SCRIPT 3 ###
                 Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
                 
                 TODO: Cambiar "watch" y "methods" por los usados en el backend.
@@ -463,12 +563,39 @@
                 getSlogan()
             -->
             <script>
+                //API NO MANEJA ERRORES, ESO LO HACE EL FRONT CON ALERTS.
+                const api = {
+                    base: window.APP_CONFIG.API_URL,
+
+                    /*
+                        MÉTODOS MÓDULO "LISTS"
+                    */
+                    async createList() {
+                        return await fetch(`${this.base}/lists`, { method: "POST"});
+                    },
+
+                    //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
+                    //lo utiliza para confirmar si la lista existe o no. 
+                    
+                    /*
+                        MÉTODOS MÓDULO "TODOs"
+                    */
+                    async getTodos(url) {
+                        return fetch(`${this.base}/todos/${url}`);                        
+                    }
+
+                }
+
+                //Completar con resto de métodos
+
+
                 // Vue instance initialization
                 var app = new Vue({
                     el: '#todo-app',
+
                     data: function() {
                         return {
-                            todos: todoStorage.fetch(),
+                            todos: [],
                             newTodoTitle: '',
                             editedTodo: null,
                             intention: 'all', // Default: all
@@ -487,17 +614,14 @@
                             originalSlogan: ""
                         };
                     },
+
                     watch: {
                         windowWidth(val) {
                             let that = this;
-                        },
-                        todos: {
-                            handler: function(todos) {
-                                todoStorage.save(todos);
-                            },
-                            deep: true
                         }
                     },
+
+
                     methods: {
                         editText() {
                             this.originalSlogan = this.slogan;
@@ -825,5 +949,8 @@
 
             </script>
     </body>
+
+    <!-- Cargamos toda la aplicación -->
+    <script> window.addEventListener("load", initApp); </script>
 
 </html>
