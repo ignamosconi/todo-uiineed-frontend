@@ -477,7 +477,8 @@
                     */
                    const url = path.slice(1); 
 
-                   const data = await loadTodos(url);
+                   const data = await loadTodos(url); //traemos también el título de la lista
+
                    return data;
                 }
 
@@ -510,22 +511,46 @@
                 }
 
                 //Auxiliar 3
+                let isLoading = false;
                 async function loadTodos(url) {
-                    const res = await api.getTodos(url);
-                    
-                    if (res.status === 404) {
-                        showListNotFound(url);
-                        return null;
-                    }
+                    if (isLoading) return;
+                    isLoading = true;   //Evita que salte dos veces el cartel de "error cargando datos de la lista"
 
-                    if (!res.ok) {
-                        alert("Error cargando lista");
-                        return;
-                    }
+                    try {
+                        //Todos
+                        const res = await api.getTodos(url);
+                        
+                        if (res.status === 404) {
+                            showListNotFound(url);
+                            return null;
+                        }
 
-                    const data = await res.json();
-                    state.listUrl = url;
-                    return data
+                        if (!res.ok) {
+                            alert("Error cargando lista");
+                            return;
+                        }
+
+                        //Lista (lo usamos para el título)
+                        const listRes = await api.getList(url);
+
+                        if (!listRes.ok) {
+                            alert("Error cargando datos de la lista");
+                            return;
+                        }
+
+                        //Pasando en limpio
+                        const data = await res.json();
+                        const list = await listRes.json();
+                        state.listUrl = url;
+
+                        return {
+                            title: list.title,
+                            todos: data,
+                        }
+
+                    } finally {
+                        isLoading = false
+                    }
                 }
             </script>
 
@@ -547,7 +572,6 @@
 
                     clear() {
                         localStorage.removeItem("list_url");
-                        localStorage.removeItem("page-slogan");
                     }
                 };
             </script>
@@ -572,8 +596,9 @@
                         return fetch(`${this.base}/lists`, { method: "POST"});
                     },
 
-                    //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
-                    //lo utiliza para confirmar si la lista existe o no. 
+                    async getList(url) {
+                        return fetch(`${this.base}/lists/${encodeURIComponent(url)}`, { method: "GET"}); //url, title, creation_date
+                    },
 
                     //Actualizar title de list
                     async updateTitle(url, listTitle) {
@@ -735,16 +760,21 @@
                                 this.$refs.sloganInput.focus();
                             });
                         },
-                        saveText() {
+                        async saveText() {
+                            const res = await api.updateTitle(state.listUrl, this.slogan);
+
+                            if (!res.ok) {
+                                alert("Error guardando título");
+                            }
+
                             this.isEditing = false;
-                            localStorage.setItem('page-slogan', this.slogan);
                         },
                         cancelText() {
                             this.slogan = this.originalSlogan;
                             this.isEditing = false;
                         },
                         getSlogan() {
-                            return localStorage.getItem('page-slogan') || "Edit this list title or the TODOs names with double-click :)";
+                            return "Edit this title or the TODOs names with double-click :)";
                         },
 
 
@@ -934,16 +964,28 @@
                         },
                     },
 
-                    mounted() {
+                    async mounted() {
+
+                        const result = await initApp();
+                        if (!result) return;
+
+                        // Mapear todos
+                        this.todos = result.todos.map(t => ({
+                            id: t.id,
+                            title: t.name,
+                            completed: t.status === "COMPLETED",
+                            removed: false
+                        }));
+
+                        //Título (el front lo llama slogan)
+                        this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+
+                        //UI setup (después de haber conseguido los datos)
                         this.show = true;
-                        var that = this;
                         this.contorlScreen();
-                        // Attach window.onresize event to mounted function
-                        window.onresize = () => {
-                            return (() => {
-                                window.fullWidth = document.documentElement.clientWidth;
-                                that.windowWidth = window.fullWidth; // width
-                            })()
+                        
+                        window.onresize = () => {   // Attach window.onresize event to mounted function
+                            this.windowWidth = document.documentElement.clientWidth;
                         };
                     },
 
