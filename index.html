@@ -239,12 +239,14 @@
 
                         <!-- Mensaje en main box, si no hay todos -->
                         <ul v-if="!todos.length && showEmptyTips" class="empty-tips">
-                            <li>Add Your First To-Do Item! 📝</li>
                             <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
                             <li>✔️ Drag to reorder your to-dos (PC only)</li>
                             <li>✔️ Double-click to edit slogan and tasks.</li>
                             <li>✔️ Access quick actions in the right sidebar.</li>
+                            <li>✔️ Access this list from anywhere using the link.</li>
+                            <li>✔️ No account required!</li>
+                            <li>✔️ </li>
                             </li>
                         </ul>
 
@@ -1096,14 +1098,20 @@
                             this.dragIndex = index;
                         },
 
-                        dragenter: function(e, index) {
+                        dragenter(e, index) {
                             e.preventDefault();
-                            // Avoid source object triggering its own dragenter event
+
                             if (this.dragIndex !== index) {
-                                const source = this.filteredTodos[this.dragIndex];
-                                this.filteredTodos.splice(this.dragIndex, 1);
-                                this.filteredTodos.splice(index, 0, source);
-                                // After reordering, target index becomes source index
+
+                                const sourceTodo = this.filteredTodos[this.dragIndex];
+                                const targetTodo = this.filteredTodos[index];
+
+                                const sourceIndex = this.todos.findIndex(t => t.id === sourceTodo.id);
+                                const targetIndex = this.todos.findIndex(t => t.id === targetTodo.id);
+
+                                const [moved] = this.todos.splice(sourceIndex, 1);
+                                this.todos.splice(targetIndex, 0, moved);
+
                                 this.dragIndex = index;
                             }
                         },
