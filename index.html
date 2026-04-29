@@ -25,7 +25,7 @@
         <!-- 2. Alertas personalizadas -->
         <script>
             const nativeAlert = window.alert;
-            window.alert = function(message, title = 'Prompt') {
+            window.alert = function(message, title = '(!)') {
                 return new Promise((resolve) => {
                     const overlay = document.createElement('div');
                     overlay.className = 'custom-alert-overlay';
@@ -483,9 +483,7 @@
 
                 //Auxiliar 1
                 function showListNotFound(url) {
-                    const ok = confirm(
-                        "Esa lista no existe. Presiona OK para crear una nueva."
-                    );
+                    const ok = alert("That list URL doesn't exist. \nWe've created a new list for you c:");
 
                     if (ok) {
                         state.clear();
@@ -527,8 +525,6 @@
 
                     const data = await res.json();
                     state.listUrl = url;
-                    console.log("cargando todos..")
-                    console.log(data)
                     return data
                 }
             </script>
@@ -540,6 +536,7 @@
             -->
             <script>
                 const state = {
+                    //URL DE LISTA: Si el usuario se conecta a ROOT_FRONT, lo redirigimos a la última list_url que haya accedido.
                     get listUrl() {
                         return localStorage.getItem("list_url");
                     },
@@ -550,6 +547,7 @@
 
                     clear() {
                         localStorage.removeItem("list_url");
+                        localStorage.removeItem("page-slogan");
                     }
                 };
             </script>
@@ -576,6 +574,19 @@
 
                     //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
                     //lo utiliza para confirmar si la lista existe o no. 
+
+                    //Actualizar title de list
+                    async updateTitle(url, listTitle) {
+                        return fetch(`${this.base}/lists/${encodeURIComponent(url)}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                title: listTitle
+                            })
+                        })
+                    },
                     
                     /*
                         MÉTODOS MÓDULO "TODOs"
@@ -733,8 +744,10 @@
                             this.isEditing = false;
                         },
                         getSlogan() {
-                            return localStorage.getItem('page-slogan') || "Edit this title or the TODOs names with double-click :)";
+                            return localStorage.getItem('page-slogan') || "Edit this list title or the TODOs names with double-click :)";
                         },
+
+
                         contorlScreen: function() {
                             if (this.windowWidth < 768) {
                                 this.isShow = !this.isShow;
@@ -755,21 +768,48 @@
                         shuffle: function() {
                             this.filteredTodos = _.shuffle(this.filteredTodos);
                         },
-                        addTodo: function(e) {
+                        
+                        //Mapping
+                        async refreshTodos() {
+                            const res = await api.getTodos(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error recargando todos");
+                                return;
+                            }
+
+                            const data = await res.json();
+
+                            //Mapeamos los nombres del backend a los del frontendfrontend
+                            this.todos = data.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "COMPLETED",
+                                removed: false
+                            }));
+                        },
+
+                        //Operaciones varias
+
+                        async addTodo() {
                             if (this.newTodoTitle === '') {
                                 this.checkEmpty = true;
                                 return;
                             }
-                            this.todos.unshift({
-                                id: todoStorage.uid++,
-                                title: this.newTodoTitle,
-                                completed: false,
-                                removed: false
-                            });
+
+                            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
+
+                            if (!res.ok) {
+                                alert("Error creando todo");
+                                return;
+                            }
+
                             this.newTodoTitle = '';
                             this.checkEmpty = false;
-                            this.delayTime = '0';
+
+                            await this.refreshTodos();
                         },
+
                         markAsCompleted: function(todo) {
                             todo.completed = true;
                         },
