@@ -1066,28 +1066,6 @@
                             }
                         },
 
-                        //BORRAR?
-                        lineFeed: function(event) {
-                            if (event.keyCode == 13 && event.ctrlKey) {
-                                this.newTodoTitle = this.newTodoTitle + '\n';
-                            } else {
-                                if (this.newTodoTitle === '') {
-                                    this.checkEmpty = true;
-                                    return;
-                                }
-                                this.todos.unshift({
-                                    id: todoStorage.uid++,
-                                    title: this.newTodoTitle,
-                                    completed: false,
-                                    removed: false
-                                });
-                                this.newTodoTitle = '';
-                                this.checkEmpty = false;
-                                this.delayTime = '0';
-                            }
-                        },
-
-
                         cancelEdit: function(todo) {
                             todo.title = this.editedTodo.title;
                             this.editedTodo = null;
@@ -1192,25 +1170,6 @@
                         }
                     }
                     })
-            </script>
-
-            <!--  ############ BORRAR - EXPERIMENTO ############-->
-            <script>
-                // localStorage operations
-                var STORAGE_KEY = 'uiineed-todos';
-                var todoStorage = {
-                    fetch: function() {
-                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                        todos.forEach(function(todo, index) {
-                            todo.id = index;
-                        });
-                        todoStorage.uid = todos.length;
-                        return todos;
-                    },
-                    save: function(todos) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-                    }
-                }
             </script>
     </body>
 
