@@ -371,15 +371,32 @@
                                         :class="{selected: intention === 'completed'}"
                                         @click="intention='completed'">
                                 </li>
-                                <li v-if="recycleBin.length">
-                                    <input
-                                        class="btn-small action-deleted"
-                                        type="button"
-                                        v-if="recycleBin.length"
-                                        :class="{selected: intention === 'removed'}"
-                                        value="Trash"
-                                        @click="intention='removed'"/>
+                                    <li v-if="recycleBin.length">
+                                        <input
+                                            class="btn-small action-deleted"
+                                            type="button"
+                                            v-if="recycleBin.length"
+                                            :class="{selected: intention === 'removed'}"
+                                            value="Trash"
+                                            @click="intention='removed'"/>
+
+                                        <!-- Completar  @click -->
+                                        <input
+                                            type="button"
+                                            class="btn-small clear-all"
+                                            value="Delete ALL trash"
+                                        
+                                        /> 
+
+                                        <input
+                                            type="button"
+                                            class="btn-small clear-all"
+                                            value="Restore ALL trash"
+                                        />
+                                    </li>
                                 </li>
+
+
                             </ul>
                             <ul class="todo-func-list batch">
                                 <!-- <li v-if="todos.length"></li> -->
@@ -388,13 +405,13 @@
                                         type="button"
                                         class="btn-small completed-all"
                                         v-if="leftTodosCount"
-                                        value="Finish all"
+                                        value="Mark ALL as Completed"
                                         @click="markAllAsCompleted">
                                 </li>
                                 <li v-if="completedTodosCount">
                                     <input
                                         type="button"
-                                        value="Clear Completed"
+                                        value="Send ALL completed to trash"
                                         class="btn-small completed-clear"
                                         v-if="completedTodosCount"
                                         @click="clearCompleted">
@@ -402,7 +419,7 @@
                                 <li v-if="todos.length"><input
                                     type="button"
                                     class="btn-small clear-all"
-                                    value="Clear All"
+                                    value="Send ALL to trash"
                                     @click="clearAll">
                                 </li>
                             </ul>
@@ -421,7 +438,6 @@
 
                     </div>
                 </div>
-
             </div>
 
             <!--  
