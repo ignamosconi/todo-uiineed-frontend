@@ -216,7 +216,7 @@
                                 class="btn btn-label btn-allFinish"
                                 value="Mark All Done"
                                 @click="markAllAsCompleted"
-                                v-if="todos.length || recycleBin.length"/>
+                                v-if="todos.length || hasRemovedTodo"/>
                             <template>
                                 <div>
                                     <div v-if="!isEditing" @dblclick="editText" class="bar-message-text">
@@ -238,13 +238,15 @@
                         </div>
 
                         <!-- Mensaje en main box, si no hay todos -->
-                        <ul v-if="!todos.length && showEmptyTips" class="empty-tips">
-                            <li>Add Your First To-Do Item! 📝</li>
+                        <ul v-if="showEmptyTips" class="empty-tips">
                             <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
                             <li>✔️ Drag to reorder your to-dos (PC only)</li>
                             <li>✔️ Double-click to edit slogan and tasks.</li>
                             <li>✔️ Access quick actions in the right sidebar.</li>
+                            <li>✔️ Access this list from anywhere using the link.</li>
+                            <li>✔️ No account required!</li>
+                            <li>✔️ Share it with your friends :)</li>
                             </li>
                         </ul>
 
@@ -272,7 +274,7 @@
                                 <div
                                     class="todo-content"
                                     :class='{completed:todo.completed}'
-                                    @dblclick="editdTodo(todo)">
+                                    @dblclick="startEditingTodo(todo)">
                                     {{todo.title}}</div>
                                 <div
                                     class="todo-btn btn-finish"
@@ -345,9 +347,6 @@
                         </div>
                         <div class="todo-footer-box">
                             <ul class="todo-func-list filter">
-                                <!-- <li v-if="todos.length || recycleBin.length">Filter：</li> -->
-                                <!-- <li v-if="hasRemovedTodo" ><input type="button" value="Back"
-                                v-if="hasRemovedTodo" @click="restoreTodo()"></li> -->
                                 <li >
                                     <input
                                         class="btn-small action-showAll"
@@ -371,15 +370,31 @@
                                         :class="{selected: intention === 'completed'}"
                                         @click="intention='completed'">
                                 </li>
-                                <li v-if="recycleBin.length">
-                                    <input
-                                        class="btn-small action-deleted"
-                                        type="button"
-                                        v-if="recycleBin.length"
-                                        :class="{selected: intention === 'removed'}"
-                                        value="Trash"
-                                        @click="intention='removed'"/>
-                                </li>
+                                    <li v-if="hasRemovedTodo">
+                                        <input
+                                            class="btn-small action-deleted"
+                                            type="button"
+                                            :class="{selected: intention === 'removed'}"
+                                            value="Trash"
+                                            @click="intention='removed'"
+                                        />
+
+                                        <input
+                                            type="button"
+                                            class="btn-small clear-all"
+                                            value="Delete ALL trash"
+                                            @click="clearTrash"
+                                        /> 
+
+                                        <input
+                                            type="button"
+                                            class="btn-small clear-all"
+                                            value="Restore ALL trash"
+                                            @click="restoreAllTrash"
+                                        />
+                                    </li>
+
+
                             </ul>
                             <ul class="todo-func-list batch">
                                 <!-- <li v-if="todos.length"></li> -->
@@ -388,13 +403,13 @@
                                         type="button"
                                         class="btn-small completed-all"
                                         v-if="leftTodosCount"
-                                        value="Finish all"
+                                        value="Mark ALL as Completed"
                                         @click="markAllAsCompleted">
                                 </li>
                                 <li v-if="completedTodosCount">
                                     <input
                                         type="button"
-                                        value="Clear Completed"
+                                        value="Send ALL completed to trash"
                                         class="btn-small completed-clear"
                                         v-if="completedTodosCount"
                                         @click="clearCompleted">
@@ -402,27 +417,18 @@
                                 <li v-if="todos.length"><input
                                     type="button"
                                     class="btn-small clear-all"
-                                    value="Clear All"
+                                    value="Send ALL to trash"
                                     @click="clearAll">
                                 </li>
                             </ul>
                             <ul class="todo-func-list datasave">
-                                <li v-if="leftTodosCount">
-                                    <input
-                                        type="button"
-                                        value="Export data"
-                                        class="btn-small  action-download"
-                                        id="download"
-                                        onclick="handleClickDownload()"></input>
-                                </li>
+
                                 <li>
                                     <input
-                                        value="Import(txt/json)"
+                                        value="New list"
                                         type="button"
                                         class="btn-small action-import"
-                                        id="import"/>
-                                    <!-- <input type="file" id="import-file" accept=".txt,.json"
-                                    style="display:none"> -->
+                                        @click="createNewList"/>
                                 </li>
                             </ul>
 
@@ -430,7 +436,6 @@
 
                     </div>
                 </div>
-
             </div>
 
             <!--  
@@ -477,7 +482,8 @@
                     */
                    const url = path.slice(1); 
 
-                   const data = await loadTodos(url);
+                   const data = await loadTodos(url); //traemos también el título de la lista
+
                    return data;
                 }
 
@@ -496,7 +502,7 @@
                     const res = await api.createList();
 
                     if (!res.ok) {
-                        alert("Error creando lista");
+                        alert("Error creating list.");
                         return;
                     }
 
@@ -510,22 +516,46 @@
                 }
 
                 //Auxiliar 3
+                let isLoading = false;
                 async function loadTodos(url) {
-                    const res = await api.getTodos(url);
-                    
-                    if (res.status === 404) {
-                        showListNotFound(url);
-                        return null;
-                    }
+                    if (isLoading) return;
+                    isLoading = true;   //Evita que salte dos veces el cartel de "error cargando datos de la lista"
 
-                    if (!res.ok) {
-                        alert("Error cargando lista");
-                        return;
-                    }
+                    try {
+                        //Todos
+                        const res = await api.getTodos(url);
+                        
+                        if (res.status === 404) {
+                            showListNotFound(url);
+                            return null;
+                        }
 
-                    const data = await res.json();
-                    state.listUrl = url;
-                    return data
+                        if (!res.ok) {
+                            alert("Error cargando lista");
+                            return;
+                        }
+
+                        //Lista (lo usamos para el título)
+                        const listRes = await api.getList(url);
+
+                        if (!listRes.ok) {
+                            alert("Error updating list data.");
+                            return;
+                        }
+
+                        //Pasando en limpio
+                        const data = await res.json();
+                        const list = await listRes.json();
+                        state.listUrl = url;
+
+                        return {
+                            title: list.title,
+                            todos: data,
+                        }
+
+                    } finally {
+                        isLoading = false
+                    }
                 }
             </script>
 
@@ -547,7 +577,6 @@
 
                     clear() {
                         localStorage.removeItem("list_url");
-                        localStorage.removeItem("page-slogan");
                     }
                 };
             </script>
@@ -572,8 +601,9 @@
                         return fetch(`${this.base}/lists`, { method: "POST"});
                     },
 
-                    //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
-                    //lo utiliza para confirmar si la lista existe o no. 
+                    async getList(url) {
+                        return fetch(`${this.base}/lists/${encodeURIComponent(url)}`, { method: "GET"}); //url, title, creation_date
+                    },
 
                     //Actualizar title de list
                     async updateTitle(url, listTitle) {
@@ -701,17 +731,16 @@
                     data: function() {
                         return {
                             todos: [],
+                            checkEmpty: false,
                             newTodoTitle: '',
                             editedTodo: null,
                             intention: 'all', // Default: all
-                            checkEmpty: false,
-                            recycleBin: [],
                             dragIndex: '',
                             enterIndex: '',
                             show: true,
                             delayTime: '1',
                             isShow: false,
-                            shortCut: 'OPEN✨',
+                            shortCut: '≡ Quicks',
                             popShow: true,
                             windowWidth: document.documentElement.clientWidth,
                             slogan: this.getSlogan(),
@@ -726,8 +755,255 @@
                         }
                     }, 
 
+                    async mounted() {
+
+                        const result = await initApp();
+                        if (!result) return;
+
+                        // Mapear todos
+                        this.todos = result.todos.map(t => ({
+                            id: t.id,
+                            title: t.name,
+                            completed: t.status === "completed",
+                            removed: t.isEliminated
+                        }));
+
+                        //Título (el front lo llama slogan)
+                        this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+
+                        //UI setup (después de haber conseguido los datos)
+                        this.show = true;
+                        this.controlScreen();
+                        
+                        window.onresize = () => {   // Attach window.onresize event to mounted function
+                            this.windowWidth = document.documentElement.clientWidth;
+                        };
+                    },
 
                     methods: {
+                        //Botón "New list"
+                        async createNewList() {
+                            const result = await createFlow();
+
+                            if (!result) return;
+
+                            // Mapear todos
+                            this.todos = result.todos.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "completed",
+                                removed: t.isEliminated
+                            }));
+
+                            // Resetear título
+                            this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                        },
+                        
+                        //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
+                        //Llamamos a GET /todos/:url para obtener los status=created y status=completed con is-eliminated=false; y hacemos 
+                        //un GET/todos/:url/trash para obtener los is-eliminated=true
+                        async refreshTodos() {
+                            const [todosRes, trashRes] = await Promise.all([
+                                api.getTodos(state.listUrl),
+                                api.getTrash(state.listUrl)
+                            ]);
+
+                            if (!todosRes.ok || !trashRes.ok) {
+                                alert("Error loading todos.");
+                                return;
+                            }
+
+                            const todosData = await todosRes.json();
+                            const trashData = await trashRes.json();
+
+                            const mappedTodos = todosData.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "completed",
+                                removed: false
+                            }));
+
+                            const mappedTrash = trashData.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "completed",
+                                removed: true
+                            }));
+
+                            this.todos = [...mappedTodos, ...mappedTrash];
+                        },
+
+                        /*
+                            API CALLS
+                            Métodos que sincronizan las acciones del front con los datos del back.
+                        */
+                        //Añadir un nuevo todo
+                        async addTodo() {
+                            if (this.newTodoTitle === '') {
+                                this.checkEmpty = true;
+                                return;
+                            }
+
+                            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
+
+                            if (!res.ok) {
+                                alert("Error creating todo.");
+                                return;
+                            }
+
+                            this.newTodoTitle = '';
+                            this.checkEmpty = false;
+
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar un único todo de status created → completed
+                        async markAsCompleted(todo) {
+                            const res = await api.updateStatus(state.listUrl, todo.id, "completed");
+
+                            if (!res.ok) {
+                                alert("Error updating todo status.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar un único todo de status completed → created.
+                        async markAsUncompleted(todo) {
+                            const res = await api.updateStatus(state.listUrl, todo.id, "created");
+
+                            if (!res.ok) {
+                                alert("Error updating todo status.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Cambiar nombre de un único todo. Para poder usar esta función, hay que hacerle doble click a un todo. La función startEditingTodo abre el menú
+                        //de cambio de nombre cuando se le hace doble click.
+                        async editDone(todo) {
+                            if (todo.title === '') {
+                                await this.removeTodo(todo);
+                                return;
+                            }
+
+                            const res = await api.updateName(state.listUrl, todo.id, todo.title);
+
+                            if (!res.ok) {
+                                alert("Error updating todo name.");
+                                return;
+                            }
+
+                            this.editedTodo = null;
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar un único todo de isEliminated: false → isEliminated: true
+                        async removeTodo(todo) {
+                            const res = await api.updateIsEliminated(state.listUrl, todo.id, true);
+
+                            if (!res.ok) {
+                                alert("Error sending todo to trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar un único todo de isEliminated: true → isEliminated: false
+                        async restoreTodo(todo) {
+                            const res = await api.updateIsEliminated(state.listUrl, todo.id, false);
+
+                            if (!res.ok) {
+                                alert("Error restoring todo from trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar todos los todos.status = created → todos.status = completed.
+                        async markAllAsCompleted() {
+                            const confirmed = await confirm('Mark all todos as completed?');
+                            if (!confirmed) return;
+
+                            const res = await api.completeAll(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error updating todos to completed.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Pasar a todos los 'todos'.status = completed de isEliminated: false → isEliminated: true
+                        async clearCompleted() {
+                            const confirmed = await confirm('Send all completed todos to trash?')
+                            if (!confirmed) return;
+
+                            const res = await api.clearCompleted(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error sending completed todos to trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Send all to trash
+                        async clearAll() {
+                            const confirmed = await confirm('Send all todo items to trash?')
+                            if (!confirmed) return;
+                            const res = await api.clearAll(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error sending all todos to trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();        
+                        },
+
+                        //Restore all from trash
+                        async restoreAllTrash() {
+                            const confirmed = await confirm('Restore all todo items from trash?')
+                            if (!confirmed) return;
+
+                            const res = await api.restoreTrash(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error restoring all todos in trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+                        //Delete all trash items permanently
+                        async clearTrash() {
+                            const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.')
+                            if (!confirmed) return;
+
+                            const res = await api.clearTrash(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error deleting all todos in trash.");
+                                return;
+                            }
+
+                            await this.refreshTodos();
+                        },
+
+
+
+                        /*
+                            LEGACY FUNCTIONS - SLOGAN
+                        */
+                        //Funciones usadas para slogan, que sería el título de la list en la versión actual.
                         editText() {
                             this.originalSlogan = this.slogan;
                             this.isEditing = true;
@@ -735,20 +1011,28 @@
                                 this.$refs.sloganInput.focus();
                             });
                         },
-                        saveText() {
+                        async saveText() {
+                            const res = await api.updateTitle(state.listUrl, this.slogan);
+
+                            if (!res.ok) {
+                                alert("Error saving list-title.");
+                            }
+
                             this.isEditing = false;
-                            localStorage.setItem('page-slogan', this.slogan);
                         },
                         cancelText() {
                             this.slogan = this.originalSlogan;
                             this.isEditing = false;
                         },
                         getSlogan() {
-                            return localStorage.getItem('page-slogan') || "Edit this list title or the TODOs names with double-click :)";
+                            return "Edit this title or the TODOs names with double-click :)";
                         },
 
-
-                        contorlScreen: function() {
+                        /*
+                            LEGACY FUNCTIONS 
+                            Control de pantalla
+                        */
+                        controlScreen: function() {
                             if (this.windowWidth < 768) {
                                 this.isShow = !this.isShow;
                                 return this.shortCut = 'Filter';
@@ -760,152 +1044,56 @@
                         shortCutAction: function() {
                             this.isShow = !this.isShow;
                             if (this.isShow) {
-                                return this.shortCut = '＝';
+                                return this.shortCut = '≡';
                             } else {
-                                return this.shortCut = 'OPEN✨';
+                                return this.shortCut = '≡ Quicks';
                             }
                         },
                         shuffle: function() {
                             this.filteredTodos = _.shuffle(this.filteredTodos);
                         },
-                        
-                        //Mapping
-                        async refreshTodos() {
-                            const res = await api.getTodos(state.listUrl);
 
-                            if (!res.ok) {
-                                alert("Error recargando todos");
-                                return;
-                            }
-
-                            const data = await res.json();
-
-                            //Mapeamos los nombres del backend a los del frontendfrontend
-                            this.todos = data.map(t => ({
-                                id: t.id,
-                                title: t.name,
-                                completed: t.status === "COMPLETED",
-                                removed: false
-                            }));
-                        },
-
-                        //Operaciones varias
-
-                        async addTodo() {
-                            if (this.newTodoTitle === '') {
-                                this.checkEmpty = true;
-                                return;
-                            }
-
-                            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
-
-                            if (!res.ok) {
-                                alert("Error creando todo");
-                                return;
-                            }
-
-                            this.newTodoTitle = '';
-                            this.checkEmpty = false;
-
-                            await this.refreshTodos();
-                        },
-
-                        markAsCompleted: function(todo) {
-                            todo.completed = true;
-                        },
-                        markAsUncompleted: function(todo) {
-                            todo.completed = false;
-                        },
-                        markAllAsCompleted: function() {
-                            confirm('Confirm to mark all as completed?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.todos.map(function(todo) {
-                                        if (!todo.completed) todo.completed = true;
-                                    });
-                                }
-                            }); 
-                        },
-
-                        removeTodo: function(todo) {
-                            let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
-                            removedTodo.removed = true;
-                            this.recycleBin.unshift(removedTodo);
-                        },
-                        restoreTodo: function(todo) {
-                            todo.removed = false;
-                            this.todos.unshift(todo);
-                            let pos = this.recycleBin.indexOf(todo);
-                            this.recycleBin.splice(pos, 1);
-                        },
-                        editdTodo: function(todo) {
+                        /*
+                            LEGACY FUNCTIONS - 
+                            Abrir menú para editar todo haciendo doble click en él.
+                            Mover todos por la pantalla.
+                        */
+                        // Activa el modo edición para un todo (triggered by double-click) 
+                        startEditingTodo: function(todo) {
                             this.editedTodo = {
                                 id: todo.id,
                                 title: todo.title
                             }
                         },
-                        lineFeed: function(event) {
-                            if (event.keyCode == 13 && event.ctrlKey) {
-                                this.newTodoTitle = this.newTodoTitle + '\n';
-                            } else {
-                                if (this.newTodoTitle === '') {
-                                    this.checkEmpty = true;
-                                    return;
-                                }
-                                this.todos.unshift({
-                                    id: todoStorage.uid++,
-                                    title: this.newTodoTitle,
-                                    completed: false,
-                                    removed: false
-                                });
-                                this.newTodoTitle = '';
-                                this.checkEmpty = false;
-                                this.delayTime = '0';
-                            }
-                        },
-                        editDone: function(todo) {
-                            if (todo.title === '') {
-                                this.removeTodo(todo);
-                            }
-                            this.editedTodo = null;
-                        },
+
                         cancelEdit: function(todo) {
                             todo.title = this.editedTodo.title;
                             this.editedTodo = null;
-                        },
-                        clearCompleted: function() {
-                            confirm('Confirm to clear all completed items?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.completedTodos.map(todo => todo.removed = true);
-                                    this.recycleBin.unshift(...this.completedTodos);
-                                    this.todos = this.leftTodos;
-                                }
-                            });
-                        },
-                        clearAll: function() {
-                            confirm('Confirm to clear all todo items?').then((confirmed) => {
-                                if (confirmed) {
-                                    this.todos.map(todo => todo.removed = true);
-                                    this.recycleBin.unshift(...this.todos);
-                                    this.todos = [];
-                                }
-                            });
                         },
 
                         // Drag Operations
                         dragstart: function(index) {
                             this.dragIndex = index;
                         },
-                        dragenter: function(e, index) {
+
+                        dragenter(e, index) {
                             e.preventDefault();
-                            // Avoid source object triggering its own dragenter event
+
                             if (this.dragIndex !== index) {
-                                const source = this.filteredTodos[this.dragIndex];
-                                this.filteredTodos.splice(this.dragIndex, 1);
-                                this.filteredTodos.splice(index, 0, source);
-                                // After reordering, target index becomes source index
+
+                                const sourceTodo = this.filteredTodos[this.dragIndex];
+                                const targetTodo = this.filteredTodos[index];
+
+                                const sourceIndex = this.todos.findIndex(t => t.id === sourceTodo.id);
+                                const targetIndex = this.todos.findIndex(t => t.id === targetTodo.id);
+
+                                const [moved] = this.todos.splice(sourceIndex, 1);
+                                this.todos.splice(targetIndex, 0, moved);
+
                                 this.dragIndex = index;
                             }
                         },
+
                         dragover: function(e, index) {
                             e.preventDefault();
                         },
@@ -934,19 +1122,6 @@
                         },
                     },
 
-                    mounted() {
-                        this.show = true;
-                        var that = this;
-                        this.contorlScreen();
-                        // Attach window.onresize event to mounted function
-                        window.onresize = () => {
-                            return (() => {
-                                window.fullWidth = document.documentElement.clientWidth;
-                                that.windowWidth = window.fullWidth; // width
-                            })()
-                        };
-                    },
-
                     directives: {
                         focus: {
                             inserted: function(el) {
@@ -960,147 +1135,41 @@
                             return this.newTodoTitle.length === 0 && this.checkEmpty
                         },
                         leftTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return !todo.completed
-                            })
+                            return this.todos.filter(t => !t.completed && !t.removed);
                         },
                         leftTodosCount: function() {
                             return this.leftTodos.length
                         },
                         hasRemovedTodo: function() {
-                            return !!this.removedTodo
+                            return this.todos.some(t => t.removed);
                         },
                         completedTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return todo.completed
-                            })
+                            return this.todos.filter(t => t.completed && !t.removed);
                         },
                         completedTodosCount: function() {
                             return this.completedTodos.length
                         },
-                        filteredTodos: function() {
+
+                        filteredTodos() {
                             if (this.intention === 'ongoing') {
-                                return this.leftTodos
-                            } else if (this.intention === 'completed') {
-                                return this.completedTodos
-                            } else if (this.intention === 'removed') {
-                                return this.recycleBin
-                            } else {
-                                return this.todos
+                                return this.todos.filter(t => !t.completed && !t.removed);
+                            } 
+                            else if (this.intention === 'completed') {
+                                return this.todos.filter(t => t.completed && !t.removed);
+                            } 
+                            else if (this.intention === 'removed') {
+                                return this.todos.filter(t => t.removed);
+                            } 
+                            else {
+                                return this.todos.filter(t => !t.removed);
                             }
                         },
+
                         showEmptyTips() {
                             return this.filteredTodos.length === 0 && this.intention !== 'removed';
                         }
                     }
                     })
-            </script>
-
-            <!--  ############ BORRAR - EXPERIMENTO ############-->
-            <script>
-                // localStorage operations
-                var STORAGE_KEY = 'uiineed-todos';
-                var todoStorage = {
-                    fetch: function() {
-                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                        todos.forEach(function(todo, index) {
-                            todo.id = index;
-                        });
-                        todoStorage.uid = todos.length;
-                        return todos;
-                    },
-                    save: function(todos) {
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-                    }
-                }
-            </script>
-
-
-            <!--  
-                ### SCRIPT 5 ###
-                Exportación e importación de JSONs de TODOs. 
-
-                TODO: Definir si esta funcionalidad se queda o se va.
-            -->
-            <script>
-                // Fetch data from localStorage
-                var fetchedTodos = todoStorage.fetch();
-
-                const handleClickDownload = () => {
-                    const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
-                    const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
-                    const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
-                    
-                    const element = document.createElement('a');
-                    element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
-                    element.download = fileName;
-                    
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                };
-
-                // Import file
-                let tempFileInput = null; // Store dynamically created file input element
-                document.getElementById('import').addEventListener('click', function() {
-                    if (!tempFileInput) {
-                        tempFileInput = document.createElement('input');
-                        tempFileInput.type = 'file';
-                        tempFileInput.accept = '.txt,.json';
-                        tempFileInput.style.display = 'none';
-                        this.parentNode.appendChild(tempFileInput);
-
-                        tempFileInput.addEventListener('change', function(event) {
-                            var file = event.target.files[0];
-                            if (!file) return alert('No file selected!', 'Error');
-                            var reader = new FileReader();
-                            reader.onload = function(e) {
-                                var content = e.target.result;
-                                try {
-                                    var importedData;
-                                    if (file.type === 'application/json') {
-                                        // If JSON file, parse directly
-                                        importedData = JSON.parse(content);
-                                    } else if (file.type === 'text/plain') {
-                                        // If TXT file, try to parse as JSON
-                                        importedData = JSON.parse(content.trim());
-                                    } else {
-                                        throw new Error('Unsupported file type');
-                                    }
-                                    // Get current data from localStorage
-                                    var currentTodos = todoStorage.fetch() || [];
-                                    // Get current data count for new unique ids
-                                    var nextIdIndex = currentTodos.length;
-                                    // Update ids for imported data
-                                    importedData.forEach((item, index) => {
-                                        item.id = nextIdIndex + index;
-                                    });
-                                    // Append imported data to existing data
-                                    var updatedTodos = currentTodos.concat(importedData);
-                                    // Update localStorage
-                                    todoStorage.save(updatedTodos);
-                                    // Update page content
-                                    updatePageContent(updatedTodos);
-                                    alert('File imported successfully, data has been appended!');
-                                } catch (error) {
-                                    alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
-                                }
-                            };
-                            reader.onerror = function(e) {
-                                alert('Error reading file: ' + e.target.error.name, 'Error');
-                            };
-                            reader.readAsText(file);
-                            this.parentNode.removeChild(tempFileInput);
-                            tempFileInput = null;
-                        });
-                    }
-                    tempFileInput.click();
-                });
-
-                function updatePageContent(data) {
-                    app.todos = data;
-                }
-
             </script>
     </body>
 
