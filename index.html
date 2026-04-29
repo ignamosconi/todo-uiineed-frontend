@@ -407,22 +407,13 @@
                                 </li>
                             </ul>
                             <ul class="todo-func-list datasave">
-                                <li v-if="leftTodosCount">
-                                    <input
-                                        type="button"
-                                        value="Export data"
-                                        class="btn-small  action-download"
-                                        id="download"
-                                        onclick="handleClickDownload()"></input>
-                                </li>
+
                                 <li>
                                     <input
-                                        value="Import(txt/json)"
+                                        value="New list"
                                         type="button"
                                         class="btn-small action-import"
-                                        id="import"/>
-                                    <!-- <input type="file" id="import-file" accept=".txt,.json"
-                                    style="display:none"> -->
+                                        @click="createNewList"/>
                                 </li>
                             </ul>
 
@@ -760,6 +751,25 @@
                                 this.$refs.sloganInput.focus();
                             });
                         },
+
+                        //Botón "New list"
+                        async createNewList() {
+                            const result = await createFlow();
+
+                            if (!result) return;
+
+                            // Mapear todos
+                            this.todos = result.todos.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "COMPLETED",
+                                removed: false
+                            }));
+
+                            // Resetear título
+                            this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                        },
+
                         async saveText() {
                             const res = await api.updateTitle(state.listUrl, this.slogan);
 
@@ -1055,94 +1065,6 @@
                         localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
                     }
                 }
-            </script>
-
-
-            <!--  
-                ### SCRIPT 5 ###
-                Exportación e importación de JSONs de TODOs. 
-
-                TODO: Definir si esta funcionalidad se queda o se va.
-            -->
-            <script>
-                // Fetch data from localStorage
-                var fetchedTodos = todoStorage.fetch();
-
-                const handleClickDownload = () => {
-                    const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
-                    const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
-                    const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
-                    
-                    const element = document.createElement('a');
-                    element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
-                    element.download = fileName;
-                    
-                    document.body.appendChild(element);
-                    element.click();
-                    document.body.removeChild(element);
-                };
-
-                // Import file
-                let tempFileInput = null; // Store dynamically created file input element
-                document.getElementById('import').addEventListener('click', function() {
-                    if (!tempFileInput) {
-                        tempFileInput = document.createElement('input');
-                        tempFileInput.type = 'file';
-                        tempFileInput.accept = '.txt,.json';
-                        tempFileInput.style.display = 'none';
-                        this.parentNode.appendChild(tempFileInput);
-
-                        tempFileInput.addEventListener('change', function(event) {
-                            var file = event.target.files[0];
-                            if (!file) return alert('No file selected!', 'Error');
-                            var reader = new FileReader();
-                            reader.onload = function(e) {
-                                var content = e.target.result;
-                                try {
-                                    var importedData;
-                                    if (file.type === 'application/json') {
-                                        // If JSON file, parse directly
-                                        importedData = JSON.parse(content);
-                                    } else if (file.type === 'text/plain') {
-                                        // If TXT file, try to parse as JSON
-                                        importedData = JSON.parse(content.trim());
-                                    } else {
-                                        throw new Error('Unsupported file type');
-                                    }
-                                    // Get current data from localStorage
-                                    var currentTodos = todoStorage.fetch() || [];
-                                    // Get current data count for new unique ids
-                                    var nextIdIndex = currentTodos.length;
-                                    // Update ids for imported data
-                                    importedData.forEach((item, index) => {
-                                        item.id = nextIdIndex + index;
-                                    });
-                                    // Append imported data to existing data
-                                    var updatedTodos = currentTodos.concat(importedData);
-                                    // Update localStorage
-                                    todoStorage.save(updatedTodos);
-                                    // Update page content
-                                    updatePageContent(updatedTodos);
-                                    alert('File imported successfully, data has been appended!');
-                                } catch (error) {
-                                    alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
-                                }
-                            };
-                            reader.onerror = function(e) {
-                                alert('Error reading file: ' + e.target.error.name, 'Error');
-                            };
-                            reader.readAsText(file);
-                            this.parentNode.removeChild(tempFileInput);
-                            tempFileInput = null;
-                        });
-                    }
-                    tempFileInput.click();
-                });
-
-                function updatePageContent(data) {
-                    app.todos = data;
-                }
-
             </script>
     </body>
 
