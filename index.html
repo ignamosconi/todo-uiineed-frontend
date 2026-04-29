@@ -216,7 +216,7 @@
                                 class="btn btn-label btn-allFinish"
                                 value="Mark All Done"
                                 @click="markAllAsCompleted"
-                                v-if="todos.length || recycleBin.length"/>
+                                v-if="todos.length || hasRemovedTodo"/>
                             <template>
                                 <div>
                                     <div v-if="!isEditing" @dblclick="editText" class="bar-message-text">
@@ -345,9 +345,6 @@
                         </div>
                         <div class="todo-footer-box">
                             <ul class="todo-func-list filter">
-                                <!-- <li v-if="todos.length || recycleBin.length">Filter：</li> -->
-                                <!-- <li v-if="hasRemovedTodo" ><input type="button" value="Back"
-                                v-if="hasRemovedTodo" @click="restoreTodo()"></li> -->
                                 <li >
                                     <input
                                         class="btn-small action-showAll"
@@ -371,11 +368,10 @@
                                         :class="{selected: intention === 'completed'}"
                                         @click="intention='completed'">
                                 </li>
-                                    <li v-if="recycleBin.length">
+                                    <li v-if="hasRemovedTodo">
                                         <input
                                             class="btn-small action-deleted"
                                             type="button"
-                                            v-if="recycleBin.length"
                                             :class="{selected: intention === 'removed'}"
                                             value="Trash"
                                             @click="intention='removed'"
@@ -395,7 +391,6 @@
                                             @click="restoreAllTrash"
                                         />
                                     </li>
-                                </li>
 
 
                             </ul>
@@ -735,7 +730,6 @@
                         return {
                             todos: [],
                             checkEmpty: false,
-                            recycleBin: [],
                             newTodoTitle: '',
                             editedTodo: null,
                             intention: 'all', // Default: all
@@ -744,7 +738,7 @@
                             show: true,
                             delayTime: '1',
                             isShow: false,
-                            shortCut: 'OPEN✨',
+                            shortCut: '≡ Quicks',
                             popShow: true,
                             windowWidth: document.documentElement.clientWidth,
                             slogan: this.getSlogan(),
@@ -769,7 +763,7 @@
                             id: t.id,
                             title: t.name,
                             completed: t.status === "completed",
-                            removed: false
+                            removed: t.isEliminated
                         }));
 
                         //Título (el front lo llama slogan)
@@ -796,7 +790,7 @@
                                 id: t.id,
                                 title: t.name,
                                 completed: t.status === "completed",
-                                removed: false
+                                removed: t.isEliminated
                             }));
 
                             // Resetear título
@@ -804,23 +798,37 @@
                         },
                         
                         //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
+                        //Llamamos a GET /todos/:url para obtener los status=created y status=completed con is-eliminated=false; y hacemos 
+                        //un GET/todos/:url/trash para obtener los is-eliminated=true
                         async refreshTodos() {
-                            const res = await api.getTodos(state.listUrl);
+                            const [todosRes, trashRes] = await Promise.all([
+                                api.getTodos(state.listUrl),
+                                api.getTrash(state.listUrl)
+                            ]);
 
-                            if (!res.ok) {
+                            if (!todosRes.ok || !trashRes.ok) {
                                 alert("Error loading todos.");
                                 return;
                             }
 
-                            const data = await res.json();
+                            const todosData = await todosRes.json();
+                            const trashData = await trashRes.json();
 
-                            //Mapeamos los nombres del backend a los del frontend
-                            this.todos = data.map(t => ({
+                            const mappedTodos = todosData.map(t => ({
                                 id: t.id,
                                 title: t.name,
                                 completed: t.status === "completed",
                                 removed: false
                             }));
+
+                            const mappedTrash = trashData.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "completed",
+                                removed: true
+                            }));
+
+                            this.todos = [...mappedTodos, ...mappedTrash];
                         },
 
                         /*
@@ -916,7 +924,7 @@
 
                         //Pasar todos los todos.status = created → todos.status = completed.
                         async markAllAsCompleted() {
-                            const confirmed = confirm('Mark all todos as completed?');
+                            const confirmed = await confirm('Mark all todos as completed?');
                             if (!confirmed) return;
 
                             const res = await api.completeAll(state.listUrl);
@@ -931,7 +939,7 @@
 
                         //Pasar a todos los 'todos'.status = completed de isEliminated: false → isEliminated: true
                         async clearCompleted() {
-                            const confirmed = confirm('Send all completed todos to trash?')
+                            const confirmed = await confirm('Send all completed todos to trash?')
                             if (!confirmed) return;
 
                             const res = await api.clearCompleted(state.listUrl);
@@ -946,9 +954,8 @@
 
                         //Send all to trash
                         async clearAll() {
-                            const confirmed = confirm('Send all todo items to trash?')
+                            const confirmed = await confirm('Send all todo items to trash?')
                             if (!confirmed) return;
-
                             const res = await api.clearAll(state.listUrl);
 
                             if (!res.ok) {
@@ -961,7 +968,7 @@
 
                         //Restore all from trash
                         async restoreAllTrash() {
-                            const confirmed = confirm('Restore all todo items from trash?')
+                            const confirmed = await confirm('Restore all todo items from trash?')
                             if (!confirmed) return;
 
                             const res = await api.restoreTrash(state.listUrl);
@@ -976,7 +983,7 @@
 
                         //Delete all trash items permanently
                         async clearTrash() {
-                            const confirmed = confirm('Delete all todos in trash? This action cannot be undone.')
+                            const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.')
                             if (!confirmed) return;
 
                             const res = await api.clearTrash(state.listUrl);
@@ -1035,9 +1042,9 @@
                         shortCutAction: function() {
                             this.isShow = !this.isShow;
                             if (this.isShow) {
-                                return this.shortCut = '＝';
+                                return this.shortCut = '≡';
                             } else {
-                                return this.shortCut = 'OPEN✨';
+                                return this.shortCut = '≡ Quicks';
                             }
                         },
                         shuffle: function() {
@@ -1056,6 +1063,8 @@
                                 title: todo.title
                             }
                         },
+
+                        //BORRAR?
                         lineFeed: function(event) {
                             if (event.keyCode == 13 && event.ctrlKey) {
                                 this.newTodoTitle = this.newTodoTitle + '\n';
@@ -1075,6 +1084,8 @@
                                 this.delayTime = '0';
                             }
                         },
+
+
                         cancelEdit: function(todo) {
                             todo.title = this.editedTodo.title;
                             this.editedTodo = null;
@@ -1138,36 +1149,36 @@
                             return this.newTodoTitle.length === 0 && this.checkEmpty
                         },
                         leftTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return !todo.completed
-                            })
+                            return this.todos.filter(t => !t.completed && !t.removed);
                         },
                         leftTodosCount: function() {
                             return this.leftTodos.length
                         },
                         hasRemovedTodo: function() {
-                            return !!this.removedTodo
+                            return this.todos.some(t => t.removed);
                         },
                         completedTodos: function() {
-                            return this.todos.filter(function(todo) {
-                                return todo.completed
-                            })
+                            return this.todos.filter(t => t.completed && !t.removed);
                         },
                         completedTodosCount: function() {
                             return this.completedTodos.length
                         },
 
-                        filteredTodos: function() {
+                        filteredTodos() {
                             if (this.intention === 'ongoing') {
-                                return this.leftTodos
-                            } else if (this.intention === 'completed') {
-                                return this.completedTodos
-                            } else if (this.intention === 'removed') {
-                                return this.recycleBin
-                            } else {
-                                return this.todos
+                                return this.todos.filter(t => !t.completed && !t.removed);
+                            } 
+                            else if (this.intention === 'completed') {
+                                return this.todos.filter(t => t.completed && !t.removed);
+                            } 
+                            else if (this.intention === 'removed') {
+                                return this.todos.filter(t => t.removed);
+                            } 
+                            else {
+                                return this.todos.filter(t => !t.removed);
                             }
                         },
+
                         showEmptyTips() {
                             return this.filteredTodos.length === 0 && this.intention !== 'removed';
                         }
