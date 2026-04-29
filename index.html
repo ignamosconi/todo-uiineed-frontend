@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
+    <!-- 
+        La etiqueta <head> añade las siguientes características a la página:
+            1. SEO: A través de etiquetas <meta>, indica  palabras clave y descripción de la página.
+            2. Alertas personalizadas, para que no se muestren las por defecto del navegador. 
+    -->
     <head>
+        <!-- 1. ETIQUETAS META -->
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,28 +21,22 @@
         <link type="favicon" rel="shortcut icon" href="public/img/favicon.png"/>
         <link href="public/css/normalize.css" rel="stylesheet" media="screen">
         <link href="public/css/style.min.css" rel="stylesheet" media="screen">
-        <script>
-            // Automatically detect and switch language
-            const browserLanguage = navigator.language || navigator.userLanguage;
-            const languageCode = browserLanguage.split('-')[0].toLowerCase();
-            if (!localStorage.getItem('uiineed-todos-lang')) localStorage.setItem('uiineed-todos-lang', languageCode);
-            const userLanguage = localStorage.getItem('uiineed-todos-lang');
-            if (userLanguage && userLanguage === "zh") window.location.href = (window.location.pathname === "/") ? 'index-zh.html' : window.location.href.replace('index.html', 'index-zh.html');
-        </script>
+
+        <!-- 2. Alertas personalizadas -->
         <script>
             const nativeAlert = window.alert;
-            window.alert = function(message, title = 'Prompt') {
+            window.alert = function(message, title = '(!)') {
                 return new Promise((resolve) => {
                     const overlay = document.createElement('div');
                     overlay.className = 'custom-alert-overlay';
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-<div class="custom-alert-title">${title}</div>
-<div class="custom-alert-content">${message}</div>
-<div class="custom-alert-buttons">
-    <button class="custom-alert-btn confirm">OK</button>
-</div>
+                        <div class="custom-alert-title">${title}</div>
+                        <div class="custom-alert-content">${message}</div>
+                        <div class="custom-alert-buttons">
+                            <button class="custom-alert-btn confirm">OK</button>
+                        </div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -61,12 +62,12 @@
                     const alertBox = document.createElement('div');
                     alertBox.className = 'custom-alert';
                     alertBox.innerHTML = `
-<div class="custom-alert-title">${title}</div>
-<div class="custom-alert-content">${message}</div>
-<div class="custom-alert-buttons">
-    <button class="custom-alert-btn cancel">Cancel</button>
-    <button class="custom-alert-btn confirm">OK</button>
-</div>
+                        <div class="custom-alert-title">${title}</div>
+                        <div class="custom-alert-content">${message}</div>
+                        <div class="custom-alert-buttons">
+                            <button class="custom-alert-btn cancel">Cancel</button>
+                            <button class="custom-alert-btn confirm">OK</button>
+                        </div>
                     `;
                     overlay.appendChild(alertBox);
                     document.body.appendChild(overlay);
@@ -93,15 +94,30 @@
                 });
             };
         </script>
-        <!-- Vue 2.x Todo List -->
-        <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script> -->
+
+        <!-- 3. INICIALIZACIÓN DE APP -->
+        <!-- Cargamos los scripts -->
         <script src="public/js/vue.js"></script>
+        <script src="public/js/config.js"></script>
     </head>
 
+
+
     <body>
+        <!--
+            COLOR DE FONDO
+        -->
         <div class="bg-pattern"></div>
+
+  
         <div class="todo-wrapper">
+
+            <!-- 
+                HTML APP TODO
+            -->
             <div id="todo-app" class="todo-app">
+
+                <!-- HEADER -->
                 <div class="container header ">
                     <div class="todo-input">
                         <h1 class="title">
@@ -145,9 +161,55 @@
                     </div>
                 </div>
 
-                <!-- todo list -->
+                <!-- CUSTOM INFO -->
+                <div class="nav">
+
+                    <!-- Botón "Github" -->
+                    <div class="github">
+                        <a href="https://github.com/ignamosconi/todo-uiineed-frontend" target="_blank" class="social-link" draggable="false">
+                            <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                        </a>
+                    </div>
+
+                    <!-- Recuadro "about" -->
+                   <div class="about">
+                        <div class="info">
+                            <div
+                                class="info-ico"
+                                @click="togglePop"
+                                :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
+                                About
+                            </div>
+                            <div class="popup animated popIn" v-if="!popShow">
+                                <div class="author">
+                                    <img src="public/img/author.jpg" alt="">
+                                    Igna :)
+                                </div>
+                                <div class="author-info">
+                                    <div class="author-desc">
+                                        I don't remember any code I wrote, even though it made me.
+                                    </div>
+                                </div>
+                                <div class="social">
+                                    
+                                    <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
+                                        <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                                    </a>
+                                    <a href="mailto:ignamosconi@gmail.com" class="social-link">
+                                        <img src="public/img/social/mail.svg" class="ic-social" alt="">
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                </div>
+
+                <!-- APP TODO LIST -->
                 <div class="container main">
+
+                    <!-- MAIN BOX -->
                     <div class="todo-list-box">
+                        
                         <div class="bar-message">
                             <input
                                 type="button"
@@ -175,15 +237,14 @@
                             </template>
                         </div>
 
+                        <!-- Mensaje en main box, si no hay todos -->
                         <ul v-if="!todos.length && showEmptyTips" class="empty-tips">
                             <li>Add Your First To-Do Item! 📝</li>
-                            <li>Usage Tips 💡:</li>
+                            <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
                             <li>✔️ Drag to reorder your to-dos (PC only)</li>
                             <li>✔️ Double-click to edit slogan and tasks.</li>
                             <li>✔️ Access quick actions in the right sidebar.</li>
-                            <li>🔒 Your data is stored locally in your browser.</li>
-                            <li>📝 Supports data download and import.
                             </li>
                         </ul>
 
@@ -370,448 +431,680 @@
                     </div>
                 </div>
 
-                <!-- Custom Info -->
-                <div class="nav">
-                    <div class="github">
-                        <a href="https://github.com/ricocc/uiineed-todo-list?ref=opensource-todo" target="_blank" class="social-link" draggable="false">
-                            <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
-                        </a>
-                    </div>
-                   <div class="about">
-                        <div class="info">
-                            <div
-                                class="info-ico"
-                                @click="togglePop"
-                                :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
-                                About
-                            </div>
-                            <div class="popup animated popIn" v-if="!popShow">
-                                <div class="author">
-                                    <img src="public/img/author.jpg" alt="">
-                                    RicoCC
-                                </div>
-                                <div class="author-info">
-                                    <div class="author-desc">
-                                        A simple one who loves design and code.
-                                    </div>
-                                </div>
-                                <div class="social">
-                                    <a href="https://x.com/ricouii" target="_blank" class="social-link">
-                                        <img src="public/img/social/x.svg" class="ic-social" alt="">
-                                    </a>
-                                    <a href="https://github.com/ricocc/uiineed-todo-list" target="_blank" class="social-link" draggable="false">
-                                        <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                    <a href="mailto:ricocc@qq.com" class="social-link">
-                                        <img src="public/img/social/mail.svg" class="ic-social" alt="">
-                                    </a>
-                                    <a
-                                        href="https://www.xiaohongshu.com/user/profile/5f2b6903000000000101f51f"
-                                        target="_blank"
-                                        class="social-link">
-                                        <img src="public/img/social/xiaohongshu.svg" class="ic-social" alt="">
-                                    </a>
-
-                                    <a
-                                        href="https://dribbble.com/rrrricocc"
-                                        target="_blank"
-                                        class="social-link">
-                                        <img src="public/img/social/dribbble.svg" class="ic-social" alt="">
-                                    </a>
-
-                                </div>
-
-                                <a href="https://ricoui.com/?ref=todo" target="_blank" class="inspiration">🔖Rico's Blog↗
-                                </a>
-                            </div>
-                        </div>
-                    </div> 
-
-                <!-- witch Chinese Or English as homepage as required -->
-                    <div class="language switch-language">
-                        <a href="javascript:void(0)" class="en active" draggable="false">En</a>
-                        <span>/</span>
-                        <a href="index-zh.html" target="_self" class="zh" draggable="false" @click="saveLanguage('zh')">中</a>
-                    </div>
-                </div>
-
             </div>
-        </div>
-        <script>
-            // localStorage operations
-            var STORAGE_KEY = 'uiineed-todos';
-            var todoStorage = {
-                fetch: function() {
-                    var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-                    todos.forEach(function(todo, index) {
-                        todo.id = index;
-                    });
-                    todoStorage.uid = todos.length;
-                    return todos;
-                },
-                save: function(todos) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-                }
-            }
-        </script>
-        <script>
-            // Vue instance initialization
-            var app = new Vue({
-                el: '#todo-app',
-                data: function() {
-                    return {
-                        todos: todoStorage.fetch(),
-                        newTodoTitle: '',
-                        editedTodo: null,
-                        intention: 'all', // Default: all
-                        checkEmpty: false,
-                        recycleBin: [],
-                        dragIndex: '',
-                        enterIndex: '',
-                        show: true,
-                        delayTime: '1',
-                        isShow: false,
-                        shortCut: 'OPEN✨',
-                        popShow: true,
-                        windowWidth: document.documentElement.clientWidth,
-                        slogan: this.getSlogan(),
-                        isEditing: false,
-                        originalSlogan: ""
-                    };
-                },
-                watch: {
-                    windowWidth(val) {
-                        let that = this;
-                    },
-                    todos: {
-                        handler: function(todos) {
-                            todoStorage.save(todos);
-                        },
-                        deep: true
+
+            <!--  
+                ### SCRIPT 1 ###
+                Inicialización
+            -->
+            <script>
+                async function initApp() {
+
+                    //Detectamos la URL actual.
+                    const path = window.location.pathname;
+
+                    /*
+                    CASO 1: El usuario entra a ROOT_FRONT/ (es decir, la página principal) y no hay ninguna
+                    list_url guardada en localstorage, por lo que vamos a crearle una nueva lista y 
+                    asignarle una url_lista, con [POST] ROOT_BACK/lists.
+
+                    Tras crear la lista, el usuario será redirigido a ROOT_FRONT/url_lista, que va a cargar los 
+                    datos de [GET] ROOT_BACK/todos/url_lista. 
+
+                    La list_url creada se asigna al localstorage.
+                    */
+                    if (path === "/") {
+                        if (!state.listUrl) {
+                            return createFlow();
+                        }
+                        
+                        /*
+                        CASO 3: El usuario ingresa a ROOT_FRONT y ya existe una list_url guardada en 
+                        localstorage, por lo que se redirecciona a esa list_url con  ROOT_FRONT/list_url, 
+                        como se analizó en el paso 1.
+                        */
+                        window.history.replaceState({}, "", `/${state.listUrl}`);
+                        return loadTodos(state.listUrl);
                     }
-                },
-                methods: {
-                    editText() {
-                        this.originalSlogan = this.slogan;
-                        this.isEditing = true;
-                        this.$nextTick(() => {
-                            this.$refs.sloganInput.focus();
-                        });
-                    },
-                    saveText() {
-                        this.isEditing = false;
-                        localStorage.setItem('uiineed-slogan', this.slogan);
-                    },
-                    cancelText() {
-                        this.slogan = this.originalSlogan;
-                        this.isEditing = false;
-                    },
-                    getSlogan() {
-                        return localStorage.getItem('uiineed-slogan') || "Act Now, Simplify Life.☕";
-                    },
-                    contorlScreen: function() {
-                        if (this.windowWidth < 768) {
-                            this.isShow = !this.isShow;
-                            return this.shortCut = 'Filter';
-                        }
-                    },
-                    togglePop: function() {
-                        this.popShow = !this.popShow;
-                    },
-                    shortCutAction: function() {
-                        this.isShow = !this.isShow;
-                        if (this.isShow) {
-                            return this.shortCut = '＝';
-                        } else {
-                            return this.shortCut = 'OPEN✨';
-                        }
-                    },
-                    shuffle: function() {
-                        this.filteredTodos = _.shuffle(this.filteredTodos);
-                    },
-                    addTodo: function(e) {
-                        if (this.newTodoTitle === '') {
-                            this.checkEmpty = true;
-                            return;
-                        }
-                        this.todos.unshift({
-                            id: todoStorage.uid++,
-                            title: this.newTodoTitle,
-                            completed: false,
-                            removed: false
-                        });
-                        this.newTodoTitle = '';
-                        this.checkEmpty = false;
-                        this.delayTime = '0';
-                    },
-                    markAsCompleted: function(todo) {
-                        todo.completed = true;
-                    },
-                    markAsUncompleted: function(todo) {
-                        todo.completed = false;
-                    },
-                    markAllAsCompleted: function() {
-                        confirm('Confirm to mark all as completed?').then((confirmed) => {
-                            if (confirmed) {
-                                this.todos.map(function(todo) {
-                                    if (!todo.completed) todo.completed = true;
-                                });
-                            }
-                        }); 
+
+                    /*
+                    CASO 2: El usuario entra a ROOT_FRONT/:url_lista, porque en otra sesión ya creó una lista y 
+                    guardó su URL para usarla después. El endpoint [GET] ROOT_BACK/todos/:url_lista ya valida si la lista existe.
+                    De ser así, cargamos los datos de [GET] ROOT_BACK/todos/:url_lista.
+
+                    Si la url_lista no existe, el front muestra un cartel que dice "Esa lista no existe. Presiona "ok" para crear
+                    una nueva (el único botón disponible). Tras seleccionar ok, se ejecuta el flujo del caso 1.
+                    */
+                   const url = path.slice(1); 
+
+                   const data = await loadTodos(url);
+                   return data;
+                }
+
+                //Auxiliar 1
+                function showListNotFound(url) {
+                    const ok = alert("That list URL doesn't exist. \nWe've created a new list for you c:");
+
+                    if (ok) {
+                        state.clear();
+                        createFlow();
+                    }
+                }
+
+                //Auxiliar 2
+                async function createFlow() {
+                    const res = await api.createList();
+
+                    if (!res.ok) {
+                        alert("Error creando lista");
+                        return;
+                    }
+
+                    const data = await res.json();
+
+                    state.listUrl = data.url;
+
+                    window.history.replaceState({}, "", `/${data.url}`);
+
+                    return loadTodos(data.url);
+                }
+
+                //Auxiliar 3
+                async function loadTodos(url) {
+                    const res = await api.getTodos(url);
+                    
+                    if (res.status === 404) {
+                        showListNotFound(url);
+                        return null;
+                    }
+
+                    if (!res.ok) {
+                        alert("Error cargando lista");
+                        return;
+                    }
+
+                    const data = await res.json();
+                    state.listUrl = url;
+                    return data
+                }
+            </script>
+
+            <!--  
+                ### SCRIPT 2 ###
+                Almacenamiento de URL de forma local (permite que con conectarse a ROOT_FRONT se 
+                pueda redirigir a la última lista creada)
+            -->
+            <script>
+                const state = {
+                    //URL DE LISTA: Si el usuario se conecta a ROOT_FRONT, lo redirigimos a la última list_url que haya accedido.
+                    get listUrl() {
+                        return localStorage.getItem("list_url");
                     },
 
-                    removeTodo: function(todo) {
-                        let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
-                        removedTodo.removed = true;
-                        this.recycleBin.unshift(removedTodo);
+                    set listUrl(value) {
+                        localStorage.setItem("list_url", value);
                     },
-                    restoreTodo: function(todo) {
-                        todo.removed = false;
-                        this.todos.unshift(todo);
-                        let pos = this.recycleBin.indexOf(todo);
-                        this.recycleBin.splice(pos, 1);
+
+                    clear() {
+                        localStorage.removeItem("list_url");
+                        localStorage.removeItem("page-slogan");
+                    }
+                };
+            </script>
+            
+
+            <!-- 
+                ### SCRIPT 3 ###
+                Definimos la constante "api", que realizará los feteches al backend. 
+
+                Este código NO MANEJA ERRORES (por ejemplo un cartel de alerta ante un fallo), ya que esto es una 
+                funcionalidad del frontend. 
+            -->
+            <script>
+                const api = {
+                    //Definimos la url del backend
+                    base: window.APP_CONFIG.API_URL,
+
+                    /*
+                        MÉTODOS MÓDULO "LISTS"
+                    */
+                    async createList() {
+                        return fetch(`${this.base}/lists`, { method: "POST"});
                     },
-                    editdTodo: function(todo) {
-                        this.editedTodo = {
-                            id: todo.id,
-                            title: todo.title
+
+                    //No es necesario el endpoint para [GET] list url, porque el /todo/:url ya
+                    //lo utiliza para confirmar si la lista existe o no. 
+
+                    //Actualizar title de list
+                    async updateTitle(url, listTitle) {
+                        return fetch(`${this.base}/lists/${encodeURIComponent(url)}`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                title: listTitle
+                            })
+                        })
+                    },
+                    
+                    /*
+                        MÉTODOS MÓDULO "TODOs"
+                    */
+
+                    //Si no pasamos el parámetro status, se obtienen 'todos' con status "created" y "completed", siempre y cuando isEliminated = false. 
+                    //Si pasamos el parámetro status = created o status = completed, se filtra solo por eso. 
+                    async getTodos(url, status) {
+                        const query = status ? `?status=${status}` : "";
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}${query}`);                      
+                    },
+
+                    //Agregar todo
+                    async addTodo(url, todoName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                name: todoName
+                            })
+                        });
+                    },
+
+                    //Obtener todos con isEliminated = true (los que están en trash)
+                    async getTrash(url) {
+                        return fetch(`${this.base}/todos/${url}/trash`, {method: "GET"})
+                    },
+
+                    //Actualizar status a "created" o "completed"
+                    async updateStatus(url, id, statusName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/status`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify ({
+                                status: statusName
+                            })
+                        })
+                    },
+
+                    //Actualizar name de todo (se hace con doble click en el front)
+                    async updateName(url, id, todoName) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/name`, {
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                name: todoName
+                            })
+                        })
+                    },
+
+                    //Actualizar isEliminated de todo (define si se muestra en trash o no)
+                    async updateIsEliminated(url, id, todoIsEliminated) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/is-eliminated`, { 
+                            method: "PATCH",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                isEliminated: todoIsEliminated
+                            })
+                        })
+                    },
+
+                    //Marcar a todos los 'todos' como status = completed, siempre y cuando isEliminated = false.
+                    async completeAll(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/complete-all`, {method: "PATCH"})
+                    },
+
+                    //Pasar a todos los 'todos' con status = completed a trash, es decir pasar su isEliminated a true.
+                    async clearCompleted(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-completed`, {method: "PATCH"})
+                    }, 
+
+                    //Pasar todos los 'todos' con status: created o status: completed a trash (es decir, pasar su isEliminated a true)
+                    async clearAll(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-all`, {method: "PATCH"})                        
+                    },
+
+                    //Pasar todos los 'todos' con isEliminated: false a isEliminated:true, manteniendo su estado anterior a ser eliminados.
+                    async restoreTrash(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/restore-trash`, {method: "PATCH"})  
+                    },
+
+                    //Eliminar de la bd todo lo que esté en trash
+                    async clearTrash(url) {
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/clear-trash`, {method: "DELETE"})  
+                    }
+
+                }
+            </script>    
+
+            <!--  
+                ### SCRIPT 4 ###
+                Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
+                
+                TODO: Cambiar "watch" y "methods" por los usados en el backend.
+                
+                Las siguientes funciones deberían quedarse en local storage:
+                getSlogan().
+            -->
+            <script>
+                // Vue instance initialization
+                var app = new Vue({
+                    el: '#todo-app',
+
+                    data: function() {
+                        return {
+                            todos: [],
+                            newTodoTitle: '',
+                            editedTodo: null,
+                            intention: 'all', // Default: all
+                            checkEmpty: false,
+                            recycleBin: [],
+                            dragIndex: '',
+                            enterIndex: '',
+                            show: true,
+                            delayTime: '1',
+                            isShow: false,
+                            shortCut: 'OPEN✨',
+                            popShow: true,
+                            windowWidth: document.documentElement.clientWidth,
+                            slogan: this.getSlogan(),
+                            isEditing: false,
+                            originalSlogan: ""
+                        };
+                    },
+
+                    watch: {
+                        windowWidth(val) {
+                            let that = this;
                         }
-                    },
-                    lineFeed: function(event) {
-                        if (event.keyCode == 13 && event.ctrlKey) {
-                            this.newTodoTitle = this.newTodoTitle + '\n';
-                        } else {
+                    }, 
+
+
+                    methods: {
+                        editText() {
+                            this.originalSlogan = this.slogan;
+                            this.isEditing = true;
+                            this.$nextTick(() => {
+                                this.$refs.sloganInput.focus();
+                            });
+                        },
+                        saveText() {
+                            this.isEditing = false;
+                            localStorage.setItem('page-slogan', this.slogan);
+                        },
+                        cancelText() {
+                            this.slogan = this.originalSlogan;
+                            this.isEditing = false;
+                        },
+                        getSlogan() {
+                            return localStorage.getItem('page-slogan') || "Edit this list title or the TODOs names with double-click :)";
+                        },
+
+
+                        contorlScreen: function() {
+                            if (this.windowWidth < 768) {
+                                this.isShow = !this.isShow;
+                                return this.shortCut = 'Filter';
+                            }
+                        },
+                        togglePop: function() {
+                            this.popShow = !this.popShow;
+                        },
+                        shortCutAction: function() {
+                            this.isShow = !this.isShow;
+                            if (this.isShow) {
+                                return this.shortCut = '＝';
+                            } else {
+                                return this.shortCut = 'OPEN✨';
+                            }
+                        },
+                        shuffle: function() {
+                            this.filteredTodos = _.shuffle(this.filteredTodos);
+                        },
+                        
+                        //Mapping
+                        async refreshTodos() {
+                            const res = await api.getTodos(state.listUrl);
+
+                            if (!res.ok) {
+                                alert("Error recargando todos");
+                                return;
+                            }
+
+                            const data = await res.json();
+
+                            //Mapeamos los nombres del backend a los del frontendfrontend
+                            this.todos = data.map(t => ({
+                                id: t.id,
+                                title: t.name,
+                                completed: t.status === "COMPLETED",
+                                removed: false
+                            }));
+                        },
+
+                        //Operaciones varias
+
+                        async addTodo() {
                             if (this.newTodoTitle === '') {
                                 this.checkEmpty = true;
                                 return;
                             }
-                            this.todos.unshift({
-                                id: todoStorage.uid++,
-                                title: this.newTodoTitle,
-                                completed: false,
-                                removed: false
-                            });
+
+                            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
+
+                            if (!res.ok) {
+                                alert("Error creando todo");
+                                return;
+                            }
+
                             this.newTodoTitle = '';
                             this.checkEmpty = false;
-                            this.delayTime = '0';
-                        }
-                    },
-                    editDone: function(todo) {
-                        if (todo.title === '') {
-                            this.removeTodo(todo);
-                        }
-                        this.editedTodo = null;
-                    },
-                    cancelEdit: function(todo) {
-                        todo.title = this.editedTodo.title;
-                        this.editedTodo = null;
-                    },
-                    clearCompleted: function() {
-                        confirm('Confirm to clear all completed items?').then((confirmed) => {
-                            if (confirmed) {
-                                this.completedTodos.map(todo => todo.removed = true);
-                                this.recycleBin.unshift(...this.completedTodos);
-                                this.todos = this.leftTodos;
-                            }
-                        });
-                    },
-                    clearAll: function() {
-                        confirm('Confirm to clear all todo items?').then((confirmed) => {
-                            if (confirmed) {
-                                this.todos.map(todo => todo.removed = true);
-                                this.recycleBin.unshift(...this.todos);
-                                this.todos = [];
-                            }
-                        });
-                    },
 
-                    // Drag Operations
-                    dragstart: function(index) {
-                        this.dragIndex = index;
-                    },
-                    dragenter: function(e, index) {
-                        e.preventDefault();
-                        // Avoid source object triggering its own dragenter event
-                        if (this.dragIndex !== index) {
-                            const source = this.filteredTodos[this.dragIndex];
-                            this.filteredTodos.splice(this.dragIndex, 1);
-                            this.filteredTodos.splice(index, 0, source);
-                            // After reordering, target index becomes source index
-                            this.dragIndex = index;
-                        }
-                    },
-                    dragover: function(e, index) {
-                        e.preventDefault();
-                    },
-                    // JS hooks for animation
-                    beforeEnter(dom) {
-                        dom.classList.add('drag-enter-active');
-                    },
-                    enter(dom, done) {
-                        let delay = dom.dataset.delay;
-                        setTimeout(() => {
-                            this.delayTime = '1';
-                            dom.classList.remove('drag-enter-active');
-                            dom.classList.add('drag-enter-to');
-                            let transitionend = window.ontransitionend
-                                ? "transitionend"
-                                : "webkitTransitionEnd";
-                            dom.addEventListener(transitionend, function onEnd() {
-                                dom.removeEventListener(transitionend, onEnd);
-                                done();
-                                // Call done() to tell Vue animation is complete, triggering afterEnter hook
-                            })
-                        }, delay);
-                    },
-                    afterEnter(dom) {
-                        dom.classList.remove('drag-enter-to');
-                    },
-                    saveLanguage(lang) {
-                        localStorage.setItem('uiineed-todos-lang', lang);
-                    }
-                },
+                            await this.refreshTodos();
+                        },
 
-                mounted() {
-                    this.show = true;
-                    var that = this;
-                    this.contorlScreen();
-                    // Attach window.onresize event to mounted function
-                    window.onresize = () => {
-                        return (() => {
-                            window.fullWidth = document.documentElement.clientWidth;
-                            that.windowWidth = window.fullWidth; // width
-                        })()
-                    };
-                },
-
-                directives: {
-                    focus: {
-                        inserted: function(el) {
-                            el.focus()
-                        }
-                    }
-                },
-
-                computed: {
-                    emptyChecked: function() {
-                        return this.newTodoTitle.length === 0 && this.checkEmpty
-                    },
-                    leftTodos: function() {
-                        return this.todos.filter(function(todo) {
-                            return !todo.completed
-                        })
-                    },
-                    leftTodosCount: function() {
-                        return this.leftTodos.length
-                    },
-                    hasRemovedTodo: function() {
-                        return !!this.removedTodo
-                    },
-                    completedTodos: function() {
-                        return this.todos.filter(function(todo) {
-                            return todo.completed
-                        })
-                    },
-                    completedTodosCount: function() {
-                        return this.completedTodos.length
-                    },
-                    filteredTodos: function() {
-                        if (this.intention === 'ongoing') {
-                            return this.leftTodos
-                        } else if (this.intention === 'completed') {
-                            return this.completedTodos
-                        } else if (this.intention === 'removed') {
-                            return this.recycleBin
-                        } else {
-                            return this.todos
-                        }
-                    },
-                    showEmptyTips() {
-                        return this.filteredTodos.length === 0 && this.intention !== 'removed';
-                    }
-                }
-                })
-        </script>
-        <script>
-            // Fetch data from localStorage
-            var fetchedTodos = todoStorage.fetch();
-
-            const handleClickDownload = () => {
-                const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
-                const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
-                const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
-                
-                const element = document.createElement('a');
-                element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
-                element.download = fileName;
-                
-                document.body.appendChild(element);
-                element.click();
-                document.body.removeChild(element);
-            };
-
-            // Import file
-            let tempFileInput = null; // Store dynamically created file input element
-            document.getElementById('import').addEventListener('click', function() {
-                if (!tempFileInput) {
-                    tempFileInput = document.createElement('input');
-                    tempFileInput.type = 'file';
-                    tempFileInput.accept = '.txt,.json';
-                    tempFileInput.style.display = 'none';
-                    this.parentNode.appendChild(tempFileInput);
-
-                    tempFileInput.addEventListener('change', function(event) {
-                        var file = event.target.files[0];
-                        if (!file) return alert('No file selected!', 'Error');
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            var content = e.target.result;
-                            try {
-                                var importedData;
-                                if (file.type === 'application/json') {
-                                    // If JSON file, parse directly
-                                    importedData = JSON.parse(content);
-                                } else if (file.type === 'text/plain') {
-                                    // If TXT file, try to parse as JSON
-                                    importedData = JSON.parse(content.trim());
-                                } else {
-                                    throw new Error('Unsupported file type');
+                        markAsCompleted: function(todo) {
+                            todo.completed = true;
+                        },
+                        markAsUncompleted: function(todo) {
+                            todo.completed = false;
+                        },
+                        markAllAsCompleted: function() {
+                            confirm('Confirm to mark all as completed?').then((confirmed) => {
+                                if (confirmed) {
+                                    this.todos.map(function(todo) {
+                                        if (!todo.completed) todo.completed = true;
+                                    });
                                 }
-                                // Get current data from localStorage
-                                var currentTodos = todoStorage.fetch() || [];
-                                // Get current data count for new unique ids
-                                var nextIdIndex = currentTodos.length;
-                                // Update ids for imported data
-                                importedData.forEach((item, index) => {
-                                    item.id = nextIdIndex + index;
-                                });
-                                // Append imported data to existing data
-                                var updatedTodos = currentTodos.concat(importedData);
-                                // Update localStorage
-                                todoStorage.save(updatedTodos);
-                                // Update page content
-                                updatePageContent(updatedTodos);
-                                alert('File imported successfully, data has been appended!');
-                            } catch (error) {
-                                alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
+                            }); 
+                        },
+
+                        removeTodo: function(todo) {
+                            let removedTodo = this.todos.splice(this.todos.indexOf(todo), 1)[0];
+                            removedTodo.removed = true;
+                            this.recycleBin.unshift(removedTodo);
+                        },
+                        restoreTodo: function(todo) {
+                            todo.removed = false;
+                            this.todos.unshift(todo);
+                            let pos = this.recycleBin.indexOf(todo);
+                            this.recycleBin.splice(pos, 1);
+                        },
+                        editdTodo: function(todo) {
+                            this.editedTodo = {
+                                id: todo.id,
+                                title: todo.title
                             }
+                        },
+                        lineFeed: function(event) {
+                            if (event.keyCode == 13 && event.ctrlKey) {
+                                this.newTodoTitle = this.newTodoTitle + '\n';
+                            } else {
+                                if (this.newTodoTitle === '') {
+                                    this.checkEmpty = true;
+                                    return;
+                                }
+                                this.todos.unshift({
+                                    id: todoStorage.uid++,
+                                    title: this.newTodoTitle,
+                                    completed: false,
+                                    removed: false
+                                });
+                                this.newTodoTitle = '';
+                                this.checkEmpty = false;
+                                this.delayTime = '0';
+                            }
+                        },
+                        editDone: function(todo) {
+                            if (todo.title === '') {
+                                this.removeTodo(todo);
+                            }
+                            this.editedTodo = null;
+                        },
+                        cancelEdit: function(todo) {
+                            todo.title = this.editedTodo.title;
+                            this.editedTodo = null;
+                        },
+                        clearCompleted: function() {
+                            confirm('Confirm to clear all completed items?').then((confirmed) => {
+                                if (confirmed) {
+                                    this.completedTodos.map(todo => todo.removed = true);
+                                    this.recycleBin.unshift(...this.completedTodos);
+                                    this.todos = this.leftTodos;
+                                }
+                            });
+                        },
+                        clearAll: function() {
+                            confirm('Confirm to clear all todo items?').then((confirmed) => {
+                                if (confirmed) {
+                                    this.todos.map(todo => todo.removed = true);
+                                    this.recycleBin.unshift(...this.todos);
+                                    this.todos = [];
+                                }
+                            });
+                        },
+
+                        // Drag Operations
+                        dragstart: function(index) {
+                            this.dragIndex = index;
+                        },
+                        dragenter: function(e, index) {
+                            e.preventDefault();
+                            // Avoid source object triggering its own dragenter event
+                            if (this.dragIndex !== index) {
+                                const source = this.filteredTodos[this.dragIndex];
+                                this.filteredTodos.splice(this.dragIndex, 1);
+                                this.filteredTodos.splice(index, 0, source);
+                                // After reordering, target index becomes source index
+                                this.dragIndex = index;
+                            }
+                        },
+                        dragover: function(e, index) {
+                            e.preventDefault();
+                        },
+                        // JS hooks for animation
+                        beforeEnter(dom) {
+                            dom.classList.add('drag-enter-active');
+                        },
+                        enter(dom, done) {
+                            let delay = dom.dataset.delay;
+                            setTimeout(() => {
+                                this.delayTime = '1';
+                                dom.classList.remove('drag-enter-active');
+                                dom.classList.add('drag-enter-to');
+                                let transitionend = window.ontransitionend
+                                    ? "transitionend"
+                                    : "webkitTransitionEnd";
+                                dom.addEventListener(transitionend, function onEnd() {
+                                    dom.removeEventListener(transitionend, onEnd);
+                                    done();
+                                    // Call done() to tell Vue animation is complete, triggering afterEnter hook
+                                })
+                            }, delay);
+                        },
+                        afterEnter(dom) {
+                            dom.classList.remove('drag-enter-to');
+                        },
+                    },
+
+                    mounted() {
+                        this.show = true;
+                        var that = this;
+                        this.contorlScreen();
+                        // Attach window.onresize event to mounted function
+                        window.onresize = () => {
+                            return (() => {
+                                window.fullWidth = document.documentElement.clientWidth;
+                                that.windowWidth = window.fullWidth; // width
+                            })()
                         };
-                        reader.onerror = function(e) {
-                            alert('Error reading file: ' + e.target.error.name, 'Error');
-                        };
-                        reader.readAsText(file);
-                        this.parentNode.removeChild(tempFileInput);
-                        tempFileInput = null;
-                    });
+                    },
+
+                    directives: {
+                        focus: {
+                            inserted: function(el) {
+                                el.focus()
+                            }
+                        }
+                    },
+
+                    computed: {
+                        emptyChecked: function() {
+                            return this.newTodoTitle.length === 0 && this.checkEmpty
+                        },
+                        leftTodos: function() {
+                            return this.todos.filter(function(todo) {
+                                return !todo.completed
+                            })
+                        },
+                        leftTodosCount: function() {
+                            return this.leftTodos.length
+                        },
+                        hasRemovedTodo: function() {
+                            return !!this.removedTodo
+                        },
+                        completedTodos: function() {
+                            return this.todos.filter(function(todo) {
+                                return todo.completed
+                            })
+                        },
+                        completedTodosCount: function() {
+                            return this.completedTodos.length
+                        },
+                        filteredTodos: function() {
+                            if (this.intention === 'ongoing') {
+                                return this.leftTodos
+                            } else if (this.intention === 'completed') {
+                                return this.completedTodos
+                            } else if (this.intention === 'removed') {
+                                return this.recycleBin
+                            } else {
+                                return this.todos
+                            }
+                        },
+                        showEmptyTips() {
+                            return this.filteredTodos.length === 0 && this.intention !== 'removed';
+                        }
+                    }
+                    })
+            </script>
+
+            <!--  ############ BORRAR - EXPERIMENTO ############-->
+            <script>
+                // localStorage operations
+                var STORAGE_KEY = 'uiineed-todos';
+                var todoStorage = {
+                    fetch: function() {
+                        var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                        todos.forEach(function(todo, index) {
+                            todo.id = index;
+                        });
+                        todoStorage.uid = todos.length;
+                        return todos;
+                    },
+                    save: function(todos) {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+                    }
                 }
-                tempFileInput.click();
-            });
+            </script>
 
-            function updatePageContent(data) {
-                app.todos = data;
-            }
 
-        </script>
+            <!--  
+                ### SCRIPT 5 ###
+                Exportación e importación de JSONs de TODOs. 
+
+                TODO: Definir si esta funcionalidad se queda o se va.
+            -->
+            <script>
+                // Fetch data from localStorage
+                var fetchedTodos = todoStorage.fetch();
+
+                const handleClickDownload = () => {
+                    const todosText = JSON.stringify(todoStorage.fetch(), null, 2);
+                    const date = new Date().toISOString().replace(/-|:|\.\d+/g, '');
+                    const fileName = `todos-${date.slice(0, 8)}-${date.slice(9, 15)}.txt`;
+                    
+                    const element = document.createElement('a');
+                    element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(todosText);
+                    element.download = fileName;
+                    
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                };
+
+                // Import file
+                let tempFileInput = null; // Store dynamically created file input element
+                document.getElementById('import').addEventListener('click', function() {
+                    if (!tempFileInput) {
+                        tempFileInput = document.createElement('input');
+                        tempFileInput.type = 'file';
+                        tempFileInput.accept = '.txt,.json';
+                        tempFileInput.style.display = 'none';
+                        this.parentNode.appendChild(tempFileInput);
+
+                        tempFileInput.addEventListener('change', function(event) {
+                            var file = event.target.files[0];
+                            if (!file) return alert('No file selected!', 'Error');
+                            var reader = new FileReader();
+                            reader.onload = function(e) {
+                                var content = e.target.result;
+                                try {
+                                    var importedData;
+                                    if (file.type === 'application/json') {
+                                        // If JSON file, parse directly
+                                        importedData = JSON.parse(content);
+                                    } else if (file.type === 'text/plain') {
+                                        // If TXT file, try to parse as JSON
+                                        importedData = JSON.parse(content.trim());
+                                    } else {
+                                        throw new Error('Unsupported file type');
+                                    }
+                                    // Get current data from localStorage
+                                    var currentTodos = todoStorage.fetch() || [];
+                                    // Get current data count for new unique ids
+                                    var nextIdIndex = currentTodos.length;
+                                    // Update ids for imported data
+                                    importedData.forEach((item, index) => {
+                                        item.id = nextIdIndex + index;
+                                    });
+                                    // Append imported data to existing data
+                                    var updatedTodos = currentTodos.concat(importedData);
+                                    // Update localStorage
+                                    todoStorage.save(updatedTodos);
+                                    // Update page content
+                                    updatePageContent(updatedTodos);
+                                    alert('File imported successfully, data has been appended!');
+                                } catch (error) {
+                                    alert('File parsing error, please ensure correct format: ' + error.message, 'Error');
+                                }
+                            };
+                            reader.onerror = function(e) {
+                                alert('Error reading file: ' + e.target.error.name, 'Error');
+                            };
+                            reader.readAsText(file);
+                            this.parentNode.removeChild(tempFileInput);
+                            tempFileInput = null;
+                        });
+                    }
+                    tempFileInput.click();
+                });
+
+                function updatePageContent(data) {
+                    app.todos = data;
+                }
+
+            </script>
     </body>
+
+    <!-- Cargamos toda la aplicación -->
+    <script> window.addEventListener("load", initApp); </script>
 
 </html>
