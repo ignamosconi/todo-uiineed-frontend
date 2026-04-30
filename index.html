@@ -242,7 +242,7 @@
                             <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
                             <li>✔️ Drag in the "all" section to reorder your to-dos (PC only).</li>
-                            <li>✔️ Access this list from anywhere using the link.</li>
+                            <li>✔️ Access this list from any device using the link.</li>
                             <li>✔️ No account required!</li>
                             <li>✔️ Share the site with your friends :)</li>
                             <li>✔️ Going to the 'root' website takes you to the last list accesed. No need to remember that long link!</li>
@@ -265,12 +265,13 @@
                                 v-for='(todo, index) in filteredTodos'
                                 :key='todo.id'
                                 class='todo-item'
+                                @dragstart="dragstart($event, index)"
                                 @dragenter="dragenter($event, index)"
                                 @dragover="dragover($event, index)"
-                                @dragstart="dragstart(index)"
+                                @dragend="dragend"
                                 :data-delay="index * 150 * delayTime"
                                 v-show="show"
-                                :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id)">
+                                :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id) && !hasTextSelection">
                                 <div
                                     class="todo-content"
                                     :class='{completed:todo.completed}'
@@ -388,7 +389,7 @@
 
                                         <input
                                             type="button"
-                                            class="btn-small clear-all"
+                                            class="btn-small completed-all"
                                             value="Restore ALL trash"
                                             @click="restoreAllTrash"
                                         />
@@ -647,6 +648,25 @@
                         return fetch(`${this.base}/todos/${url}/trash`, {method: "GET"})
                     },
 
+                    async reorder(url, id, beforeId, afterId) {
+                        if (beforeId === undefined && afterId === undefined) {
+                            throw new Error("Invalid reorder: need beforeId or afterId");
+                        }
+
+                        const body = { id };
+
+                        if (beforeId !== undefined) body.beforeId = beforeId;
+                        if (afterId !== undefined) body.afterId = afterId;
+
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/reorder`, {
+                            method: "PATCH",
+                            headers: {
+                            "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(body)
+                        });
+                    },
+
                     //Actualizar status a "created" o "completed"
                     async updateStatus(url, id, statusName) {
                         return fetch(`${this.base}/todos/${encodeURIComponent(url)}/${id}/status`, {
@@ -760,16 +780,11 @@
                         const result = await initApp();
                         if (!result) return;
 
-                        // Mapear todos
-                        this.todos = result.todos.map(t => ({
-                            id: t.id,
-                            title: t.name,
-                            completed: t.status === "completed",
-                            removed: t.isEliminated
-                        }));
+                        // Traemos los todos (activos + trash)
+                        await this.refreshTodos()
 
                         //Título (el front lo llama slogan)
-                        this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                        this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
 
                         //UI setup (después de haber conseguido los datos)
                         this.show = true;
@@ -796,7 +811,7 @@
                             }));
 
                             // Resetear título
-                            this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                            this.slogan = result.title || "Edit list title or the TODOs names with double-click :)";
                         },
                         
                         //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
@@ -1071,16 +1086,10 @@
                             this.editedTodo = null;
                         },
 
-                        // Drag Operations
-                        dragstart: function(index) {
-                            this.dragIndex = index;
-                        },
-
                         dragenter(e, index) {
                             e.preventDefault();
 
                             if (this.dragIndex !== index) {
-
                                 const sourceTodo = this.filteredTodos[this.dragIndex];
                                 const targetTodo = this.filteredTodos[index];
 
@@ -1092,6 +1101,45 @@
 
                                 this.dragIndex = index;
                             }
+                        },
+
+                        dragstart(event, index) {
+                            const selection = window.getSelection().toString();
+
+                            if (selection.length > 0) {
+                                event.preventDefault();
+                                return;
+                            }
+
+                            this.dragIndex = index;
+                            this.draggedTodoId = this.filteredTodos[index].id;
+                        },
+
+                        async dragend() {
+                            const list = this.filteredTodos;
+
+                            const index = list.findIndex(t => t.id === this.draggedTodoId);
+
+                            const beforeId = list[index - 1]?.id;
+                            const afterId = list[index + 1]?.id;
+
+                            try {
+                                const res = await api.reorder(
+                                state.listUrl,
+                                this.draggedTodoId,
+                                beforeId,
+                                afterId
+                                );
+
+                                if (!res.ok) throw new Error();
+
+                            } catch (e) {
+                                alert("Error reordering. Syncing...");
+                                await this.refreshTodos(); // rollback
+                            }
+
+                            this.dragIndex = null;
+                            this.draggedTodoId = null;
                         },
 
                         dragover: function(e, index) {
@@ -1164,6 +1212,10 @@
                             else {
                                 return this.todos.filter(t => !t.removed);
                             }
+                        },
+
+                        hasTextSelection() {
+                            return window.getSelection().toString().length > 0;
                         },
 
                         showEmptyTips() {
