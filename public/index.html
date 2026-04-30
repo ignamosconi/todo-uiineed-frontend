@@ -18,9 +18,9 @@
         <meta
             name="description"
             content="uiineed's Todo List Online is a minimalist, no-login-required web app that helps you manage your tasks and schedules effortlessly. Store your todos securely in your browser's local cache, and enjoy a seamless experience without the hassle of sign-ups or logins. Perfect for both personal and professional use!">
-        <link type="favicon" rel="shortcut icon" href="public/img/favicon.png"/>
-        <link href="public/css/normalize.css" rel="stylesheet" media="screen">
-        <link href="public/css/style.min.css" rel="stylesheet" media="screen">
+        <link type="favicon" rel="shortcut icon" href="img/favicon.png"/>
+        <link href="css/normalize.css" rel="stylesheet" media="screen">
+        <link href="css/style.min.css" rel="stylesheet" media="screen">
 
         <!-- 2. Alertas personalizadas -->
         <script>
@@ -97,8 +97,8 @@
 
         <!-- 3. INICIALIZACIÓN DE APP -->
         <!-- Cargamos los scripts -->
-        <script src="public/js/vue.js"></script>
-        <script src="public/js/config.js"></script>
+        <script src="js/vue/vue.js"></script>
+        <script src="js/config/config.js"></script>
     </head>
 
 
@@ -121,7 +121,7 @@
                 <div class="container header ">
                     <div class="todo-input">
                         <h1 class="title">
-                            <img src="public/img/todo.svg" alt="" class="title-1" draggable="false">
+                            <img src="img/todo.svg" alt="" class="title-1" draggable="false">
                             <div class="ani-vector">
                                 <span></span>
                                 <span></span>
@@ -167,7 +167,7 @@
                     <!-- Botón "Github" -->
                     <div class="github">
                         <a href="https://github.com/ignamosconi/todo-uiineed-frontend" target="_blank" class="social-link" draggable="false">
-                            <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                            <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
                         </a>
                     </div>
 
@@ -182,7 +182,7 @@
                             </div>
                             <div class="popup animated popIn" v-if="!popShow">
                                 <div class="author">
-                                    <img src="public/img/author.jpg" alt="">
+                                    <img src="img/author.jpg" alt="">
                                     Igna :)
                                 </div>
                                 <div class="author-info">
@@ -193,10 +193,10 @@
                                 <div class="social">
                                     
                                     <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
-                                        <img src="public/img/social/github.svg" class="ic-social" alt="" draggable="false">
+                                        <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
                                     </a>
                                     <a href="mailto:ignamosconi@gmail.com" class="social-link">
-                                        <img src="public/img/social/mail.svg" class="ic-social" alt="">
+                                        <img src="img/social/mail.svg" class="ic-social" alt="">
                                     </a>
                                 </div>
                             </div>
@@ -737,11 +737,6 @@
             <!--  
                 ### SCRIPT 4 ###
                 Inicialización de una instancia de VUE, que define los "watch" y los "methods" que se usan en la app.
-                
-                TODO: Cambiar "watch" y "methods" por los usados en el backend.
-                
-                Las siguientes funciones deberían quedarse en local storage:
-                getSlogan().
             -->
             <script>
                 // Vue instance initialization
