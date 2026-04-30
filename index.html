@@ -265,9 +265,10 @@
                                 v-for='(todo, index) in filteredTodos'
                                 :key='todo.id'
                                 class='todo-item'
+                                @dragstart="dragstart(index, todo)"
                                 @dragenter="dragenter($event, index)"
                                 @dragover="dragover($event, index)"
-                                @dragstart="dragstart(index)"
+                                @dragend="dragend"
                                 :data-delay="index * 150 * delayTime"
                                 v-show="show"
                                 :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id)">
@@ -645,6 +646,25 @@
                     //Obtener todos con isEliminated = true (los que están en trash)
                     async getTrash(url) {
                         return fetch(`${this.base}/todos/${url}/trash`, {method: "GET"})
+                    },
+
+                    async reorder(url, id, beforeId, afterId) {
+                        if (beforeId === undefined && afterId === undefined) {
+                            throw new Error("Invalid reorder: need beforeId or afterId");
+                        }
+
+                        const body = { id };
+
+                        if (beforeId !== undefined) body.beforeId = beforeId;
+                        if (afterId !== undefined) body.afterId = afterId;
+
+                        return fetch(`${this.base}/todos/${encodeURIComponent(url)}/reorder`, {
+                            method: "PATCH",
+                            headers: {
+                            "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(body)
+                        });
                     },
 
                     //Actualizar status a "created" o "completed"
@@ -1080,7 +1100,6 @@
                             e.preventDefault();
 
                             if (this.dragIndex !== index) {
-
                                 const sourceTodo = this.filteredTodos[this.dragIndex];
                                 const targetTodo = this.filteredTodos[index];
 
@@ -1092,6 +1111,38 @@
 
                                 this.dragIndex = index;
                             }
+                        },
+
+                        dragstart(index) {
+                            this.dragIndex = index;
+                            this.draggedTodoId = this.filteredTodos[index].id;
+                        },
+
+                        async dragend() {
+                            const list = this.filteredTodos;
+
+                            const index = list.findIndex(t => t.id === this.draggedTodoId);
+
+                            const beforeId = list[index - 1]?.id;
+                            const afterId = list[index + 1]?.id;
+
+                            try {
+                                const res = await api.reorder(
+                                state.listUrl,
+                                this.draggedTodoId,
+                                beforeId,
+                                afterId
+                                );
+
+                                if (!res.ok) throw new Error();
+
+                            } catch (e) {
+                                alert("Error reordering. Syncing...");
+                                await this.refreshTodos(); // rollback
+                            }
+
+                            this.dragIndex = null;
+                            this.draggedTodoId = null;
                         },
 
                         dragover: function(e, index) {
