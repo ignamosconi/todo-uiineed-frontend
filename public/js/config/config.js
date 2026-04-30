@@ -1,4 +1,5 @@
-window.APP_CONFIG = {
-    //Ejemplo: "http://localhost:3000"; sin la / al final.
+//config/config.js
+
+export const config = {
     API_URL: "http://localhost:3000"
 };
