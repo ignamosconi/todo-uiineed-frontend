@@ -242,7 +242,7 @@
                             <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
                             <li>✔️ Drag in the "all" section to reorder your to-dos (PC only).</li>
-                            <li>✔️ Access this list from anywhere using the link.</li>
+                            <li>✔️ Access this list from any device using the link.</li>
                             <li>✔️ No account required!</li>
                             <li>✔️ Share the site with your friends :)</li>
                             <li>✔️ Going to the 'root' website takes you to the last list accesed. No need to remember that long link!</li>
@@ -265,13 +265,13 @@
                                 v-for='(todo, index) in filteredTodos'
                                 :key='todo.id'
                                 class='todo-item'
-                                @dragstart="dragstart(index, todo)"
+                                @dragstart="dragstart($event, index)"
                                 @dragenter="dragenter($event, index)"
                                 @dragover="dragover($event, index)"
                                 @dragend="dragend"
                                 :data-delay="index * 150 * delayTime"
                                 v-show="show"
-                                :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id)">
+                                :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id) && !hasTextSelection">
                                 <div
                                     class="todo-content"
                                     :class='{completed:todo.completed}'
@@ -789,7 +789,7 @@
                         }));
 
                         //Título (el front lo llama slogan)
-                        this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                        this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
 
                         //UI setup (después de haber conseguido los datos)
                         this.show = true;
@@ -816,7 +816,7 @@
                             }));
 
                             // Resetear título
-                            this.slogan = result.title || "Edit this list title or the TODOs names with double-click :)";
+                            this.slogan = result.title || "Edit list title or the TODOs names with double-click :)";
                         },
                         
                         //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
@@ -1091,11 +1091,6 @@
                             this.editedTodo = null;
                         },
 
-                        // Drag Operations
-                        dragstart: function(index) {
-                            this.dragIndex = index;
-                        },
-
                         dragenter(e, index) {
                             e.preventDefault();
 
@@ -1113,7 +1108,14 @@
                             }
                         },
 
-                        dragstart(index) {
+                        dragstart(event, index) {
+                            const selection = window.getSelection().toString();
+
+                            if (selection.length > 0) {
+                                event.preventDefault();
+                                return;
+                            }
+
                             this.dragIndex = index;
                             this.draggedTodoId = this.filteredTodos[index].id;
                         },
@@ -1215,6 +1217,10 @@
                             else {
                                 return this.todos.filter(t => !t.removed);
                             }
+                        },
+
+                        hasTextSelection() {
+                            return window.getSelection().toString().length > 0;
                         },
 
                         showEmptyTips() {
