@@ -377,4 +377,4 @@ export const methods = {
     afterEnter(dom) {
         dom.classList.remove('drag-enter-to');
     },
-},
+};

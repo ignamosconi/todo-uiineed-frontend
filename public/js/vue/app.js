@@ -1,8 +1,8 @@
 //vue/app.js
-import { computed } from "./computed";
-import { methods } from "./methods";
-import { directives } from "./directives"
-import { watch } from "./watch"
+import { computed } from "./computed.js";
+import { methods } from "./methods.js";
+import { directives } from "./directives.js"
+import { watch } from "./watch.js"
 
 /*
 ### VUE ###
