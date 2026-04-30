@@ -19,7 +19,7 @@ export const methods = {
         }));
 
         // Resetear título
-        this.slogan = result.title || "Edit list title or the TODOs names with double-click :)";
+        this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
     },
     
     //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
