@@ -241,8 +241,7 @@
                         <ul v-if="showEmptyTips" class="empty-tips">
                             <li>Usage Tips:</li>
                             <li>✔️ Press Enter to submit actions.</li>
-                            <li>✔️ Drag to reorder your to-dos (PC only)</li>
-                            <li>✔️ Access quick actions in the right sidebar.</li>
+                            <li>✔️ Drag in the "all" section to reorder your to-dos (PC only).</li>
                             <li>✔️ Access this list from anywhere using the link.</li>
                             <li>✔️ No account required!</li>
                             <li>✔️ Share the site with your friends :)</li>
@@ -271,7 +270,7 @@
                                 @dragstart="dragstart(index)"
                                 :data-delay="index * 150 * delayTime"
                                 v-show="show"
-                                :draggable="!(editedTodo !== null && editedTodo.id === todo.id)">
+                                :draggable="intention === 'all' && !(editedTodo !== null && editedTodo.id === todo.id)">
                                 <div
                                     class="todo-content"
                                     :class='{completed:todo.completed}'
@@ -1098,6 +1097,7 @@
                         dragover: function(e, index) {
                             e.preventDefault();
                         },
+                        
                         // JS hooks for animation
                         beforeEnter(dom) {
                             dom.classList.add('drag-enter-active');
