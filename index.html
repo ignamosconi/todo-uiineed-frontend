@@ -780,13 +780,8 @@
                         const result = await initApp();
                         if (!result) return;
 
-                        // Mapear todos
-                        this.todos = result.todos.map(t => ({
-                            id: t.id,
-                            title: t.name,
-                            completed: t.status === "completed",
-                            removed: t.isEliminated
-                        }));
+                        // Traemos los todos (activos + trash)
+                        await this.refreshTodos()
 
                         //Título (el front lo llama slogan)
                         this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
