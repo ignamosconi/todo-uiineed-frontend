@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 
+    <!-- Evitar flashes -->
+     <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+
     <!-- 
         La etiqueta <head> añade las siguientes características a la página:
             1. SEO: A través de etiquetas <meta>, indica  palabras clave y descripción de la página.
@@ -113,7 +120,7 @@
             <!-- 
                 HTML APP TODO
             -->
-            <div id="todo-app" class="todo-app">
+            <div id="todo-app" class="todo-app" v-cloak>
 
                 <!-- HEADER -->
                 <div class="container header ">
@@ -239,9 +246,10 @@
                         <ul v-if="showEmptyTips" class="empty-tips">
                             <li>TIPS: </li>
                             <li>✔️ Press Enter to submit actions.</li>
-                            <li>✔️ Drag in the "all" section to reorder your to-dos (PC only).</li>
-                            <li>✔️ Access lists from any device using its link (no account!).</li>
+                            <li>✔️ Drag in the "all" section to reorder (PC-only).</li>
+                            <li>✔️ Access lists from any device using its link.</li>
                             <li>✔️ Going to the main site takes you to the last list accesed in your browser. No need to remember that long link!</li>
+                            <br/>
                             <li>A list WILL be deleted if:</li>
                             <li>❌ Inactive for more than 7 days. </li>
                             <li>❌ It has no todos after 10 minutes of being made.</li>
@@ -340,8 +348,7 @@
                         <div class="side-shortcut" @click="shortCutAction()" :class="{fold: isShow}">
                             <div class="shortcut-switch">
                                 <span class="shortcut-title">{{shortCut}}</span>
-                                <span class="shortcut-name">Quicks
-                                </span>
+                                <span class="shortcut-name">Quicks</span>
                             </div>
 
                         </div>

@@ -258,7 +258,7 @@ export const methods = {
     controlScreen: function() {
         if (this.windowWidth < 768) {
             this.isShow = !this.isShow;
-            return this.shortCut = 'Filter';
+            return this.shortCut = '≡';
         }
     },
     togglePop: function() {
