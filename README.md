@@ -53,13 +53,6 @@ The personal information section is as follows:
         </div>
     </div>
 ```
-#### Usage Tips 💡
-- ✔️ Press Enter to submit all actions
-- ✔️ Drag to reorder your to-dos (PC only)
-- ✔️ Double-click to edit slogan and tasks
-- ✔️ Access quick actions in the right sidebar
-- 🔒 Your data is stored locally in your browser
-- 📝 Supports data download and import (appends to current list)
 
 ## Authors
 - Rico's Blog <a href="https://blog.ricocc.com/" target="_blank">@Ricocc</a>

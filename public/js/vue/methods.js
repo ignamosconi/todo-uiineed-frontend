@@ -83,7 +83,7 @@ export const methods = {
             const res = await api.addTodo(state.listUrl, this.newTodoTitle);
 
             if (!res.ok) {
-                alert("Error creating todo.");
+                alert("Error creating todo. Maybe slow down? :)");
                 return;
             }
 

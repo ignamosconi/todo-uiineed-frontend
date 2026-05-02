@@ -64,7 +64,7 @@ export async function createFlow() {
         const res = await api.createList();
 
         if (!res.ok) {
-            alert("Error creating list.");
+            alert("Error creating list. Maybe slow down? :)");
             return;
         }
 
