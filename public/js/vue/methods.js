@@ -143,8 +143,8 @@ export const methods = {
     //de cambio de nombre cuando se le hace doble click.
     async editDone(todo) {
         try {
-            if (todo.title === '') {
-                await this.removeTodo(todo);
+            if (todo.title.trim() === '') {
+                this.cancelEdit(todo);
                 return;
             }
 
@@ -178,11 +178,11 @@ export const methods = {
 
             await this.refreshTodos();
             
-        } catch (error) {
+        } catch(error) {
             console.error(error);
+            alert("Can't connect to server :(");
             return null;
         }
-
     },
 
     //Pasar un único todo de isEliminated: true → isEliminated: false
