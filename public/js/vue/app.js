@@ -15,6 +15,7 @@ export function createApp(initialData) {
         data: function() {
             return {
                 todos: [],
+                isLoading: true,        //Evita que se flasheen los tips antes que carguen los todos del back.
                 checkEmpty: false,
                 newTodoTitle: '',
                 initialData,        //Usamos el que viene del main.ts
@@ -30,6 +31,7 @@ export function createApp(initialData) {
                 windowWidth: document.documentElement.clientWidth,
                 slogan: "",
                 isEditing: false,
+                
                 originalSlogan: ""
             };
         },
@@ -46,6 +48,9 @@ export function createApp(initialData) {
                 return;
             }
 
+            //Definimos una fase de "carga" para evitar flashear los tips
+            this.isLoading = true;
+
             // Traemos los todos (activos + trash)
             await this.refreshTodos()
 
@@ -56,7 +61,10 @@ export function createApp(initialData) {
 
             //UI setup (después de haber conseguido los datos)
             this.show = true;
+            this.isLoading = false; //Termina la fase de "carga"
+            
             this.controlScreen();
+            
             
             window.onresize = () => {   // Attach window.onresize event to mounted function
                 this.windowWidth = document.documentElement.clientWidth;

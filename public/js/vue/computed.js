@@ -40,6 +40,8 @@ export const computed = {
     },
 
     showEmptyTips() {
-        return this.filteredTodos.length === 0 && this.intention !== 'removed';
-    },
+        return !this.isLoading &&
+            this.filteredTodos.length === 0 &&
+            this.intention !== 'removed';
+    }
 }
