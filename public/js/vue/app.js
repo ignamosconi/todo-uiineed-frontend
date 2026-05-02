@@ -63,9 +63,6 @@ export function createApp(initialData) {
             this.show = true;
             this.isLoading = false; //Termina la fase de "carga"
             
-            this.controlScreen();
-            
-            
             window.onresize = () => {   // Attach window.onresize event to mounted function
                 this.windowWidth = document.documentElement.clientWidth;
             };
