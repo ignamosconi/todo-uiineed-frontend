@@ -51,13 +51,11 @@ export async function initApp() {
 }
 
 //Auxiliar 1
-function showListNotFound(url) {
-    const ok = alert("That list URL doesn't exist. \nWe've created a new list for you c:");
+async function showListNotFound(url) {
+    alert("That list URL doesn't exist. \nWe have created a new list for you c:");
 
-    if (ok) {
-        state.clear();
-        createFlow();
-    }
+    state.clear();
+    return await createFlow();
 }
 
 //Auxiliar 2
@@ -81,16 +79,13 @@ export async function createFlow() {
 //Auxiliar 3
 let isLoading = false;
 async function loadTodos(url) {
-    if (isLoading) return;
-    isLoading = true;   //Evita que salte dos veces el cartel de "error cargando datos de la lista"
 
     try {
         //Todos
         const res = await api.getTodos(url);
         
         if (res.status === 404) {
-            showListNotFound(url);
-            return null;
+            return await showListNotFound(url);
         }
 
         if (!res.ok) {
