@@ -74,16 +74,25 @@ export const methods = {
     */
     //Añadir un nuevo todo
     async addTodo() {
-        try {
-            if (this.newTodoTitle === '') {
-                this.checkEmpty = true;
-                return;
-            }
+        if (this.newTodoTitle === '') {
+            this.checkEmpty = true;
+            return;
+        }
 
+        try {
             const res = await api.addTodo(state.listUrl, this.newTodoTitle);
 
             if (!res.ok) {
-                alert("Error creating todo. Maybe slow down? :)");
+                //Leemos el mensaje del backend
+                let message = "Error creating todo.";
+                try {
+                    const data = await res.json();
+                    if (data.message) {
+                        message = data.message;
+                    }
+                } catch {}
+
+                alert(message);
                 return;
             }
 
