@@ -60,51 +60,66 @@ async function showListNotFound(url) {
 
 //Auxiliar 2
 export async function createFlow() {
-    const res = await api.createList();
+    try {
+        const res = await api.createList();
 
-    if (!res.ok) {
-        alert("Error creating list.");
-        return;
+        if (!res.ok) {
+            alert("Error creating list.");
+            return;
+        }
+
+        const data = await res.json();
+
+        state.listUrl = data.url;
+
+        window.history.replaceState({}, "", `/${data.url}`);
+
+        return loadTodos(data.url);
+
+    } catch(error) {
+        console.error(error);
+        alert("Can't connect to server :(");
+        return null;
     }
-
-    const data = await res.json();
-
-    state.listUrl = data.url;
-
-    window.history.replaceState({}, "", `/${data.url}`);
-
-    return loadTodos(data.url);
 }
 
 //Auxiliar 3
 async function loadTodos(url) {
-    //Todos
-    const res = await api.getTodos(url);
-    
-    if (res.status === 404) {
-        return await showListNotFound(url);
+    try {
+        //Todos
+        const res = await api.getTodos(url);
+        
+        if (res.status === 404) {
+            return await showListNotFound(url);
+        }
+
+        if (!res.ok) {
+            alert("Error loading list");
+            return;
+        }
+
+        //Lista (lo usamos para el título)
+        const listRes = await api.getList(url);
+
+        if (!listRes.ok) {
+            alert("Error updating list data.");
+            return;
+        }
+
+        //Pasando en limpio
+        const data = await res.json();
+        const list = await listRes.json();
+        state.listUrl = url;
+
+        return {
+            title: list.title,
+            todos: data,
+        }
+
+    } catch(error) {
+        console.error(error);
+        alert("Can't connect to server :(");
+        return null;
     }
 
-    if (!res.ok) {
-        alert("Error cargando lista");
-        return;
-    }
-
-    //Lista (lo usamos para el título)
-    const listRes = await api.getList(url);
-
-    if (!listRes.ok) {
-        alert("Error updating list data.");
-        return;
-    }
-
-    //Pasando en limpio
-    const data = await res.json();
-    const list = await listRes.json();
-    state.listUrl = url;
-
-    return {
-        title: list.title,
-        todos: data,
-    }
 }
