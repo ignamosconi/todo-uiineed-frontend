@@ -51,50 +51,50 @@ export async function initApp() {
 }
 
 //Auxiliar 1
-function showListNotFound(url) {
-    const ok = alert("That list URL doesn't exist. \nWe've created a new list for you c:");
+async function showListNotFound(url) {
+    alert("That list URL doesn't exist. \nWe have created a new list for you c:");
 
-    if (ok) {
-        state.clear();
-        createFlow();
-    }
+    state.clear();
+    return await createFlow();
 }
 
 //Auxiliar 2
 export async function createFlow() {
-    const res = await api.createList();
+    try {
+        const res = await api.createList();
 
-    if (!res.ok) {
-        alert("Error creating list.");
-        return;
+        if (!res.ok) {
+            alert("Error creating list.");
+            return;
+        }
+
+        const data = await res.json();
+
+        state.listUrl = data.url;
+
+        window.history.replaceState({}, "", `/${data.url}`);
+
+        return loadTodos(data.url);
+
+    } catch(error) {
+        console.error(error);
+        alert("Can't connect to server :(");
+        return null;
     }
-
-    const data = await res.json();
-
-    state.listUrl = data.url;
-
-    window.history.replaceState({}, "", `/${data.url}`);
-
-    return loadTodos(data.url);
 }
 
 //Auxiliar 3
-let isLoading = false;
 async function loadTodos(url) {
-    if (isLoading) return;
-    isLoading = true;   //Evita que salte dos veces el cartel de "error cargando datos de la lista"
-
     try {
         //Todos
         const res = await api.getTodos(url);
         
         if (res.status === 404) {
-            showListNotFound(url);
-            return null;
+            return await showListNotFound(url);
         }
 
         if (!res.ok) {
-            alert("Error cargando lista");
+            alert("Error loading list");
             return;
         }
 
@@ -116,7 +116,10 @@ async function loadTodos(url) {
             todos: data,
         }
 
-    } finally {
-        isLoading = false
+    } catch(error) {
+        console.error(error);
+        alert("Can't connect to server :(");
+        return null;
     }
+
 }

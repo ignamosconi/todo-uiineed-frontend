@@ -6,54 +6,66 @@ import { createFlow } from "../core/init.js";
 export const methods = {
     //Botón "New list"
     async createNewList() {
-        const result = await createFlow();
+        try {
+            const result = await createFlow();
 
-        if (!result) return;
+            if (!result) return;
 
-        // Mapear todos
-        this.todos = result.todos.map(t => ({
-            id: t.id,
-            title: t.name,
-            completed: t.status === "completed",
-            removed: t.isEliminated
-        }));
+            // Mapear todos
+            this.todos = result.todos.map(t => ({
+                id: t.id,
+                title: t.name,
+                completed: t.status === "completed",
+                removed: t.isEliminated
+            }));
 
-        // Resetear título
-        this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
+            // Resetear título
+            this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
+
+        } catch(error) {
+            console.error(error);
+            return null;
+        }
     },
     
     //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
     //Llamamos a GET /todos/:url para obtener los status=created y status=completed con is-eliminated=false; y hacemos 
     //un GET/todos/:url/trash para obtener los is-eliminated=true
     async refreshTodos() {
-        const [todosRes, trashRes] = await Promise.all([
-            api.getTodos(state.listUrl),
-            api.getTrash(state.listUrl)
-        ]);
+        try {
+            const [todosRes, trashRes] = await Promise.all([
+                api.getTodos(state.listUrl),
+                api.getTrash(state.listUrl)
+            ]);
 
-        if (!todosRes.ok || !trashRes.ok) {
-            alert("Error loading todos.");
-            return;
+            if (!todosRes.ok || !trashRes.ok) {
+                alert("Error loading todos.");
+                return;
+            }
+
+            const todosData = await todosRes.json();
+            const trashData = await trashRes.json();
+
+            const mappedTodos = todosData.map(t => ({
+                id: t.id,
+                title: t.name,
+                completed: t.status === "completed",
+                removed: false
+            }));
+
+            const mappedTrash = trashData.map(t => ({
+                id: t.id,
+                title: t.name,
+                completed: t.status === "completed",
+                removed: true
+            }));
+
+            this.todos = [...mappedTodos, ...mappedTrash];
+
+        } catch(error) {
+            console.error(error);
+            return null;
         }
-
-        const todosData = await todosRes.json();
-        const trashData = await trashRes.json();
-
-        const mappedTodos = todosData.map(t => ({
-            id: t.id,
-            title: t.name,
-            completed: t.status === "completed",
-            removed: false
-        }));
-
-        const mappedTrash = trashData.map(t => ({
-            id: t.id,
-            title: t.name,
-            completed: t.status === "completed",
-            removed: true
-        }));
-
-        this.todos = [...mappedTodos, ...mappedTrash];
     },
 
     /*
@@ -62,165 +74,247 @@ export const methods = {
     */
     //Añadir un nuevo todo
     async addTodo() {
-        if (this.newTodoTitle === '') {
-            this.checkEmpty = true;
-            return;
+        try {
+            if (this.newTodoTitle === '') {
+                this.checkEmpty = true;
+                return;
+            }
+
+            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
+
+            if (!res.ok) {
+                alert("Error creating todo.");
+                return;
+            }
+
+            this.newTodoTitle = '';
+            this.checkEmpty = false;
+
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        const res = await api.addTodo(state.listUrl, this.newTodoTitle);
-
-        if (!res.ok) {
-            alert("Error creating todo.");
-            return;
-        }
-
-        this.newTodoTitle = '';
-        this.checkEmpty = false;
-
-        await this.refreshTodos();
+        
     },
 
     //Pasar un único todo de status created → completed
     async markAsCompleted(todo) {
-        const res = await api.updateStatus(state.listUrl, todo.id, "completed");
+        try {
+            const res = await api.updateStatus(state.listUrl, todo.id, "completed");
 
-        if (!res.ok) {
-            alert("Error updating todo status.");
-            return;
+            if (!res.ok) {
+                alert("Error updating todo status.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();
     },
 
     //Pasar un único todo de status completed → created.
     async markAsUncompleted(todo) {
-        const res = await api.updateStatus(state.listUrl, todo.id, "created");
+        try { 
+            const res = await api.updateStatus(state.listUrl, todo.id, "created");
 
-        if (!res.ok) {
-            alert("Error updating todo status.");
-            return;
+            if (!res.ok) {
+                alert("Error updating todo status.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        }  catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
 
-        await this.refreshTodos();
     },
 
     //Cambiar nombre de un único todo. Para poder usar esta función, hay que hacerle doble click a un todo. La función startEditingTodo abre el menú
     //de cambio de nombre cuando se le hace doble click.
     async editDone(todo) {
-        if (todo.title === '') {
-            await this.removeTodo(todo);
-            return;
+        try {
+            if (todo.title.trim() === '') {
+                this.cancelEdit(todo);
+                return;
+            }
+
+            const res = await api.updateName(state.listUrl, todo.id, todo.title);
+
+            if (!res.ok) {
+                alert("Error updating todo name.");
+                return;
+            }
+
+            this.editedTodo = null;
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
 
-        const res = await api.updateName(state.listUrl, todo.id, todo.title);
-
-        if (!res.ok) {
-            alert("Error updating todo name.");
-            return;
-        }
-
-        this.editedTodo = null;
-        await this.refreshTodos();
     },
 
     //Pasar un único todo de isEliminated: false → isEliminated: true
     async removeTodo(todo) {
-        const res = await api.updateIsEliminated(state.listUrl, todo.id, true);
+        try {
+            const res = await api.updateIsEliminated(state.listUrl, todo.id, true);
 
-        if (!res.ok) {
-            alert("Error sending todo to trash.");
-            return;
+            if (!res.ok) {
+                alert("Error sending todo to trash.");
+                return;
+            }
+
+            await this.refreshTodos();
+            
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();
     },
 
     //Pasar un único todo de isEliminated: true → isEliminated: false
     async restoreTodo(todo) {
-        const res = await api.updateIsEliminated(state.listUrl, todo.id, false);
+        try {
+            const res = await api.updateIsEliminated(state.listUrl, todo.id, false);
 
-        if (!res.ok) {
-            alert("Error restoring todo from trash.");
-            return;
+            if (!res.ok) {
+                alert("Error restoring todo from trash.");
+                return;
+            }
+
+            await this.refreshTodos();
+            
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();
     },
 
     //Pasar todos los todos.status = created → todos.status = completed.
     async markAllAsCompleted() {
-        const confirmed = await confirm('Mark all todos as completed?');
-        if (!confirmed) return;
+        try {
+            const confirmed = await confirm('Mark all todos as completed?');
+            if (!confirmed) return;
 
-        const res = await api.completeAll(state.listUrl);
+            const res = await api.completeAll(state.listUrl);
 
-        if (!res.ok) {
-            alert("Error updating todos to completed.");
-            return;
+            if (!res.ok) {
+                alert("Error updating todos to completed.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
 
-        await this.refreshTodos();
     },
 
     //Pasar a todos los 'todos'.status = completed de isEliminated: false → isEliminated: true
     async clearCompleted() {
-        const confirmed = await confirm('Send all completed todos to trash?')
-        if (!confirmed) return;
+        try {
+            const confirmed = await confirm('Send all completed todos to trash?')
+            if (!confirmed) return;
 
-        const res = await api.clearCompleted(state.listUrl);
+            const res = await api.clearCompleted(state.listUrl);
 
-        if (!res.ok) {
-            alert("Error sending completed todos to trash.");
-            return;
+            if (!res.ok) {
+                alert("Error sending completed todos to trash.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();
     },
 
     //Send all to trash
     async clearAll() {
-        const confirmed = await confirm('Send all todo items to trash?')
-        if (!confirmed) return;
-        const res = await api.clearAll(state.listUrl);
+        try {
+            const confirmed = await confirm('Send all todo items to trash?')
+            if (!confirmed) return;
+            const res = await api.clearAll(state.listUrl);
 
-        if (!res.ok) {
-            alert("Error sending all todos to trash.");
-            return;
+            if (!res.ok) {
+                alert("Error sending all todos to trash.");
+                return;
+            }
+
+            await this.refreshTodos();  
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();        
+      
     },
 
     //Restore all from trash
     async restoreAllTrash() {
-        const confirmed = await confirm('Restore all todo items from trash?')
-        if (!confirmed) return;
+        try {
+            const confirmed = await confirm('Restore all todo items from trash?')
+            if (!confirmed) return;
 
-        const res = await api.restoreTrash(state.listUrl);
+            const res = await api.restoreTrash(state.listUrl);
 
-        if (!res.ok) {
-            alert("Error restoring all todos in trash.");
-            return;
+            if (!res.ok) {
+                alert("Error restoring all todos in trash.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
 
-        await this.refreshTodos();
     },
 
     //Delete all trash items permanently
     async clearTrash() {
-        const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.')
-        if (!confirmed) return;
+        try {
+            const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.')
+            if (!confirmed) return;
 
-        const res = await api.clearTrash(state.listUrl);
+            const res = await api.clearTrash(state.listUrl);
 
-        if (!res.ok) {
-            alert("Error deleting all todos in trash.");
-            return;
+            if (!res.ok) {
+                alert("Error deleting all todos in trash.");
+                return;
+            }
+
+            await this.refreshTodos();
+
+        }  catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
-
-        await this.refreshTodos();
     },
-
 
 
     /*
@@ -234,14 +328,23 @@ export const methods = {
             this.$refs.sloganInput.focus();
         });
     },
-    async saveText() {
-        const res = await api.updateTitle(state.listUrl, this.slogan);
 
-        if (!res.ok) {
-            alert("Error saving list-title.");
+    async saveText() {
+        try {
+            const res = await api.updateTitle(state.listUrl, this.slogan);
+
+            if (!res.ok) {
+                alert("Error saving list-title.");
+            }
+
+            this.isEditing = false;
+
+        } catch(error) {
+            console.error(error);
+            alert("Can't connect to server :(");
+            return null;
         }
 
-        this.isEditing = false;
     },
     cancelText() {
         this.slogan = this.originalSlogan;
@@ -258,7 +361,7 @@ export const methods = {
     controlScreen: function() {
         if (this.windowWidth < 768) {
             this.isShow = !this.isShow;
-            return this.shortCut = 'Filter';
+            return this.shortCut = '≡';
         }
     },
     togglePop: function() {
