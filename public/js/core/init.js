@@ -77,41 +77,34 @@ export async function createFlow() {
 }
 
 //Auxiliar 3
-let isLoading = false;
 async function loadTodos(url) {
+    //Todos
+    const res = await api.getTodos(url);
+    
+    if (res.status === 404) {
+        return await showListNotFound(url);
+    }
 
-    try {
-        //Todos
-        const res = await api.getTodos(url);
-        
-        if (res.status === 404) {
-            return await showListNotFound(url);
-        }
+    if (!res.ok) {
+        alert("Error cargando lista");
+        return;
+    }
 
-        if (!res.ok) {
-            alert("Error cargando lista");
-            return;
-        }
+    //Lista (lo usamos para el título)
+    const listRes = await api.getList(url);
 
-        //Lista (lo usamos para el título)
-        const listRes = await api.getList(url);
+    if (!listRes.ok) {
+        alert("Error updating list data.");
+        return;
+    }
 
-        if (!listRes.ok) {
-            alert("Error updating list data.");
-            return;
-        }
+    //Pasando en limpio
+    const data = await res.json();
+    const list = await listRes.json();
+    state.listUrl = url;
 
-        //Pasando en limpio
-        const data = await res.json();
-        const list = await listRes.json();
-        state.listUrl = url;
-
-        return {
-            title: list.title,
-            todos: data,
-        }
-
-    } finally {
-        isLoading = false
+    return {
+        title: list.title,
+        todos: data,
     }
 }
