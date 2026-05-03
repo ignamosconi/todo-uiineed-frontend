@@ -10,8 +10,8 @@ El backend que consume esta API es el siguiente:  <br/>
 → https://github.com/ignamosconi/todo-uiineed-backend/
 
 <br/> 
-A continuación se muestra el readme del proyecto original, en inglés
-
+A continuación se muestra el readme del proyecto original, en inglés:
+<br/> 
 # Uiineed Todo List 介绍
 
 # Introducing Uiineed Todo List
