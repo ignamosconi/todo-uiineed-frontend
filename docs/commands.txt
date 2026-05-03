@@ -1,4 +1,0 @@
-RUN FRONT: npx serve public -s -l 3001
-
-El -s evita que se busque a /algo como un archivo (-spa)
-El -l asigna un puerto fijo.
