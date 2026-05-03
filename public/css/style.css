@@ -850,6 +850,7 @@ h1 {
   padding: 24px;
   background-color: #fff;
   width: 220px;
+  height: 10px;
 }
 .popup .author {
   font-size: 16px;
