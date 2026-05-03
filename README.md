@@ -6,8 +6,8 @@ Esto surge de la necesidad de acceder a la página web desde múltiples disposit
 <br/>
 → Repositorio original: https://github.com/ricocc/uiineed-todo-list
 
-El frontend que consume esta API es el siguiente:  <br/>
-→ https://github.com/ignamosconi/todo-uiineed-frontend/
+El backend que consume esta API es el siguiente:  <br/>
+→ https://github.com/ignamosconi/todo-uiineed-backend/
 
 <br/> 
 A continuación se muestra el readme del proyecto original, en inglés
