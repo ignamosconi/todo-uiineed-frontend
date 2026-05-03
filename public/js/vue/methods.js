@@ -436,6 +436,11 @@ export const methods = {
     },
 
     async dragend() {
+        //Evitamos la doble llamada de la función options en el back
+        if (this.isReordering) return;
+        this.isReordering = true;
+
+        //Obtenemos los todos
         const list = this.filteredTodos;
 
         const index = list.findIndex(t => t.id === this.draggedTodoId);
@@ -460,6 +465,7 @@ export const methods = {
 
         this.dragIndex = null;
         this.draggedTodoId = null;
+        this.isReordering = false;
     },
 
     dragover: function(e, index) {
