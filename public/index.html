@@ -107,19 +107,19 @@
         <script type="module" src="js/main.js"></script>
     </head>
 
-
+    
     <body>
         <!--
             COLOR DE FONDO
         -->
         <div class="bg-pattern"></div>
 
-  
+
+        <!-- 
+            HTML APP TODO
+        -->
         <div class="todo-wrapper">
 
-            <!-- 
-                HTML APP TODO
-            -->
             <div id="todo-app" class="todo-app" v-cloak>
 
                 <!-- HEADER -->
@@ -252,8 +252,6 @@
                             <li>❌ A list will be deleted if unchanged for 7 days.</li>
                             <li>❌ Spamming actions may restrict you. </li>
                             <li>❌ Every list can have a max of 100 todos. </li>
-                            
-                            </li>
                         </ul>
 
                         <transition-group
@@ -360,13 +358,15 @@
                                         value="All"
                                         :class="{selected: intention === 'all'}"
                                         @click="intention ='all'"></li>
-                                <li v-if="completedTodosCount"><input
-                                    class="btn-small action-progress"
-                                    type="button"
-                                    value="In Progress"
-                                    v-if="leftTodosCount"
-                                    :class="{selected: intention === 'ongoing'}"
-                                    @click="intention ='ongoing'"></li>
+                                <li v-if="leftTodosCount">
+                                    <input
+                                        class="btn-small action-progress"
+                                        type="button"
+                                        value="In Progress"
+                                        :class="{selected: intention === 'ongoing'}"
+                                        @click="intention ='ongoing'"
+                                    >
+                                </li>
                                 <li v-if="completedTodosCount">
                                     <input
                                         class="btn-small action-completed"
@@ -403,7 +403,6 @@
 
                             </ul>
                             <ul class="todo-func-list batch">
-                                <!-- <li v-if="todos.length"></li> -->
                                 <li v-if="leftTodosCount">
                                     <input
                                         type="button"
@@ -420,13 +419,14 @@
                                         v-if="completedTodosCount"
                                         @click="clearCompleted">
                                 </li>
-                                <li v-if="todos.length"><input
+                                <li v-if="activeTodosCount"><input
                                     type="button"
                                     class="btn-small clear-all"
                                     value="Send ALL to trash"
                                     @click="clearAll">
                                 </li>
                             </ul>
+
                             <ul class="todo-func-list datasave">
 
                                 <li>
@@ -442,6 +442,8 @@
 
                     </div>
                 </div>
+            </div>
         </div>
+
     </body>
 </html>
