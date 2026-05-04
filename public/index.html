@@ -107,19 +107,19 @@
         <script type="module" src="js/main.js"></script>
     </head>
 
-
+    
     <body>
         <!--
             COLOR DE FONDO
         -->
         <div class="bg-pattern"></div>
 
-  
+
+        <!-- 
+            HTML APP TODO
+        -->
         <div class="todo-wrapper">
 
-            <!-- 
-                HTML APP TODO
-            -->
             <div id="todo-app" class="todo-app" v-cloak>
 
                 <!-- HEADER -->
@@ -252,8 +252,6 @@
                             <li>❌ A list will be deleted if unchanged for 7 days.</li>
                             <li>❌ Spamming actions may restrict you. </li>
                             <li>❌ Every list can have a max of 100 todos. </li>
-                            
-                            </li>
                         </ul>
 
                         <transition-group
@@ -405,7 +403,6 @@
 
                             </ul>
                             <ul class="todo-func-list batch">
-                                <!-- <li v-if="todos.length"></li> -->
                                 <li v-if="leftTodosCount">
                                     <input
                                         type="button"
@@ -445,6 +442,8 @@
 
                     </div>
                 </div>
+            </div>
         </div>
+
     </body>
 </html>
