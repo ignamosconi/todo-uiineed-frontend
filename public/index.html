@@ -360,13 +360,15 @@
                                         value="All"
                                         :class="{selected: intention === 'all'}"
                                         @click="intention ='all'"></li>
-                                <li v-if="completedTodosCount"><input
-                                    class="btn-small action-progress"
-                                    type="button"
-                                    value="In Progress"
-                                    v-if="leftTodosCount"
-                                    :class="{selected: intention === 'ongoing'}"
-                                    @click="intention ='ongoing'"></li>
+                                <li v-if="leftTodosCount">
+                                    <input
+                                        class="btn-small action-progress"
+                                        type="button"
+                                        value="In Progress"
+                                        :class="{selected: intention === 'ongoing'}"
+                                        @click="intention ='ongoing'"
+                                    >
+                                </li>
                                 <li v-if="completedTodosCount">
                                     <input
                                         class="btn-small action-completed"
@@ -420,13 +422,14 @@
                                         v-if="completedTodosCount"
                                         @click="clearCompleted">
                                 </li>
-                                <li v-if="todos.length"><input
+                                <li v-if="activeTodosCount"><input
                                     type="button"
                                     class="btn-small clear-all"
                                     value="Send ALL to trash"
                                     @click="clearAll">
                                 </li>
                             </ul>
+
                             <ul class="todo-func-list datasave">
 
                                 <li>
