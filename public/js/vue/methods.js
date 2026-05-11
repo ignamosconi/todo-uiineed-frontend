@@ -1,36 +1,18 @@
-//vue/methods.js
-import { api } from "../api/todos.api.js";
-import { state } from "../core/state.js";
+// vue/methods.js
+import { api }        from "../api/todos.api.js";
+import { state }      from "../core/state.js";
 import { createFlow } from "../core/init.js";
+import { showLoader, hideLoader } from "../core/init.js";
+import { config } from "../config/config.js";
+
+
+// Helper: genera un id temporal negativo para todos optimistas
+let _tempId = -1;
+function tempId() { return _tempId--; }
 
 export const methods = {
-    //Botón "New list"
-    async createNewList() {
-        try {
-            const result = await createFlow();
 
-            if (!result) return;
-
-            // Mapear todos
-            this.todos = result.todos.map(t => ({
-                id: t.id,
-                title: t.name,
-                completed: t.status === "completed",
-                removed: t.isEliminated
-            }));
-
-            // Resetear título
-            this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
-
-        } catch(error) {
-            console.error(error);
-            return null;
-        }
-    },
-    
-    //Mapping entre frontend {id, title, completed, removed} y backend {id, name, status, isEliminated}
-    //Llamamos a GET /todos/:url para obtener los status=created y status=completed con is-eliminated=false; y hacemos 
-    //un GET/todos/:url/trash para obtener los is-eliminated=true
+    //REFRESH (solo para bulk ops y rollback)
     async refreshTodos() {
         try {
             const [todosRes, trashRes] = await Promise.all([
@@ -38,461 +20,398 @@ export const methods = {
                 api.getTrash(state.listUrl)
             ]);
 
-            if (!todosRes.ok || !trashRes.ok) {
-                alert("Error loading todos.");
-                return;
-            }
+            if (!todosRes.ok || !trashRes.ok) return;
 
             const todosData = await todosRes.json();
             const trashData = await trashRes.json();
 
-            const mappedTodos = todosData.map(t => ({
-                id: t.id,
-                title: t.name,
-                completed: t.status === "completed",
-                removed: false
-            }));
-
-            const mappedTrash = trashData.map(t => ({
-                id: t.id,
-                title: t.name,
-                completed: t.status === "completed",
-                removed: true
-            }));
-
-            this.todos = [...mappedTodos, ...mappedTrash];
-
-        } catch(error) {
-            console.error(error);
-            return null;
+            this.todos = [
+                ...todosData.map(t => ({ id: t.id, title: t.name, completed: t.status === "completed", removed: false })),
+                ...trashData.map(t => ({ id: t.id, title: t.name, completed: t.status === "completed", removed: true })),
+            ];
+        } catch(e) {
+            console.error(e);
         }
     },
 
-    /*
-        API CALLS
-        Métodos que sincronizan las acciones del front con los datos del back.
-    */
-    //Añadir un nuevo todo
+    //Añadir un TODO (optimista)
     async addTodo() {
         if (this.newTodoTitle === '') {
             this.checkEmpty = true;
             return;
         }
 
+        const name  = this.newTodoTitle;
+        const fakeId = tempId();
+
+        // 1. UI inmediato
+        this.todos.unshift({ id: fakeId, title: name, completed: false, removed: false });
+        this.newTodoTitle = '';
+        this.checkEmpty = false;
+
+        // 2. Backend en background
         try {
-            const res = await api.addTodo(state.listUrl, this.newTodoTitle);
+            const res = await api.addTodo(state.listUrl, name);
 
             if (!res.ok) {
-                //Leemos el mensaje del backend
+                // Revertir: sacar el todo falso
+                this.todos = this.todos.filter(t => t.id !== fakeId);
                 let message = "Error creating todo.";
-                try {
-                    const data = await res.json();
-                    if (data.message) {
-                        message = data.message;
-                    }
-                } catch {}
-
+                try { const d = await res.json(); if (d.message) message = d.message; } catch {}
                 alert(message);
                 return;
             }
 
-            this.newTodoTitle = '';
-            this.checkEmpty = false;
+            const created = await res.json();
+            // Reemplazar el fakeId por el id real
+            const idx = this.todos.findIndex(t => t.id === fakeId);
+            if (idx !== -1) this.todos[idx].id = created.id;
 
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = this.todos.filter(t => t.id !== fakeId);
             alert("Can't connect to server :(");
-            return null;
         }
-        
     },
 
-    //Pasar un único todo de status created → completed
+    //TOGGLE STATUS para los todos, con debaunce (evitar spam)
+    //Ambas acciones (complete / uncomplete) pasan por el mismo debounce.
+    _scheduleStatusUpdate(todo, newStatus) {
+        const id = todo.id;
+
+        // 1. UI inmediato
+        todo.completed = (newStatus === "completed");
+
+        // 2. Guardar cuál es la última acción deseada
+        this.pendingStatus[id] = newStatus;
+
+        // 3. Cancelar timer anterior si existe
+        if (this.pendingTimers[id]) {
+            clearTimeout(this.pendingTimers[id]);
+        }
+
+        // 4. Armar nuevo timer
+        this.pendingTimers[id] = setTimeout(async () => {
+            delete this.pendingTimers[id];
+            const statusToSend = this.pendingStatus[id];
+            delete this.pendingStatus[id];
+
+            try {
+                const res = await api.updateStatus(state.listUrl, id, statusToSend);
+                if (!res.ok) {
+                    // Revertir a lo que está en el back: recargamos solo ese todo
+                    await this.refreshTodos();
+                }
+            } catch(e) {
+                console.error(e);
+                await this.refreshTodos();
+            }
+        }, config.DEBOUNCE_MS);
+    },
+
     async markAsCompleted(todo) {
-        try {
-            const res = await api.updateStatus(state.listUrl, todo.id, "completed");
-
-            if (!res.ok) {
-                alert("Error updating todo status.");
-                return;
-            }
-
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
-            alert("Can't connect to server :(");
-            return null;
-        }
+        this._scheduleStatusUpdate(todo, "completed");
     },
 
-    //Pasar un único todo de status completed → created.
     async markAsUncompleted(todo) {
-        try { 
-            const res = await api.updateStatus(state.listUrl, todo.id, "created");
-
-            if (!res.ok) {
-                alert("Error updating todo status.");
-                return;
-            }
-
-            await this.refreshTodos();
-
-        }  catch(error) {
-            console.error(error);
-            alert("Can't connect to server :(");
-            return null;
-        }
-
+        this._scheduleStatusUpdate(todo, "created");
     },
 
-    //Cambiar nombre de un único todo. Para poder usar esta función, hay que hacerle doble click a un todo. La función startEditingTodo abre el menú
-    //de cambio de nombre cuando se le hace doble click.
+    //EDIT NAME (optimista — Vue ya bindea directo con v-model)
     async editDone(todo) {
+        if (todo.title.trim() === '') {
+            this.cancelEdit(todo);
+            return;
+        }
+
+        this.editedTodo = null; // cierra UI inmediato
+
         try {
-            if (todo.title.trim() === '') {
-                this.cancelEdit(todo);
-                return;
-            }
-
             const res = await api.updateName(state.listUrl, todo.id, todo.title);
-
             if (!res.ok) {
                 alert("Error updating todo name.");
-                return;
+                await this.refreshTodos();
             }
-
-            this.editedTodo = null;
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
             alert("Can't connect to server :(");
-            return null;
+            await this.refreshTodos();
         }
-
     },
 
-    //Pasar un único todo de isEliminated: false → isEliminated: true
+    //REMOVE / RESTORE, ambos optimistas.
     async removeTodo(todo) {
+        todo.removed = true; // UI inmediato
+
         try {
             const res = await api.updateIsEliminated(state.listUrl, todo.id, true);
-
             if (!res.ok) {
+                todo.removed = false;
                 alert("Error sending todo to trash.");
-                return;
             }
-
-            await this.refreshTodos();
-            
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            todo.removed = false;
             alert("Can't connect to server :(");
-            return null;
         }
     },
 
-    //Pasar un único todo de isEliminated: true → isEliminated: false
     async restoreTodo(todo) {
+        todo.removed = false; // UI inmediato
+
         try {
             const res = await api.updateIsEliminated(state.listUrl, todo.id, false);
-
             if (!res.ok) {
+                todo.removed = true;
                 alert("Error restoring todo from trash.");
-                return;
             }
-
-            await this.refreshTodos();
-            
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            todo.removed = true;
             alert("Can't connect to server :(");
-            return null;
         }
     },
 
-    //Pasar todos los todos.status = created → todos.status = completed.
+    //Operaciones masivas (son optimistas porque actualizan todo el array local)
     async markAllAsCompleted() {
-        try {
-            const confirmed = await confirm('Mark all todos as completed?');
-            if (!confirmed) return;
+        const confirmed = await confirm('Mark all todos as completed?');
+        if (!confirmed) return;
 
+        // Snapshot para rollback
+        const snapshot = this.todos.map(t => ({ ...t }));
+
+        // UI inmediato
+        this.todos.forEach(t => { if (!t.removed) t.completed = true; });
+
+        try {
             const res = await api.completeAll(state.listUrl);
-
             if (!res.ok) {
+                this.todos = snapshot;
                 alert("Error updating todos to completed.");
-                return;
             }
-
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = snapshot;
             alert("Can't connect to server :(");
-            return null;
         }
-
     },
 
-    //Pasar a todos los 'todos'.status = completed de isEliminated: false → isEliminated: true
     async clearCompleted() {
-        try {
-            const confirmed = await confirm('Send all completed todos to trash?')
-            if (!confirmed) return;
+        const confirmed = await confirm('Send all completed todos to trash?');
+        if (!confirmed) return;
 
+        const snapshot = this.todos.map(t => ({ ...t }));
+        this.todos.forEach(t => { if (t.completed && !t.removed) t.removed = true; });
+
+        try {
             const res = await api.clearCompleted(state.listUrl);
-
             if (!res.ok) {
+                this.todos = snapshot;
                 alert("Error sending completed todos to trash.");
-                return;
             }
-
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = snapshot;
             alert("Can't connect to server :(");
-            return null;
         }
     },
 
-    //Send all to trash
     async clearAll() {
+        const confirmed = await confirm('Send all todo items to trash?');
+        if (!confirmed) return;
+
+        const snapshot = this.todos.map(t => ({ ...t }));
+        this.todos.forEach(t => { if (!t.removed) t.removed = true; });
+
         try {
-            const confirmed = await confirm('Send all todo items to trash?')
-            if (!confirmed) return;
             const res = await api.clearAll(state.listUrl);
-
             if (!res.ok) {
+                this.todos = snapshot;
                 alert("Error sending all todos to trash.");
-                return;
             }
-
-            await this.refreshTodos();  
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = snapshot;
             alert("Can't connect to server :(");
-            return null;
         }
-      
     },
 
-    //Restore all from trash
     async restoreAllTrash() {
-        try {
-            const confirmed = await confirm('Restore all todo items from trash?')
-            if (!confirmed) return;
+        const confirmed = await confirm('Restore all todo items from trash?');
+        if (!confirmed) return;
 
+        const snapshot = this.todos.map(t => ({ ...t }));
+        this.todos.forEach(t => { if (t.removed) t.removed = false; });
+
+        try {
             const res = await api.restoreTrash(state.listUrl);
-
             if (!res.ok) {
+                this.todos = snapshot;
                 alert("Error restoring all todos in trash.");
-                return;
             }
-
-            await this.refreshTodos();
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = snapshot;
             alert("Can't connect to server :(");
-            return null;
         }
-
     },
 
-    //Delete all trash items permanently
     async clearTrash() {
+        const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.');
+        if (!confirmed) return;
+
+        const snapshot = this.todos.map(t => ({ ...t }));
+        this.todos = this.todos.filter(t => !t.removed);
+
         try {
-            const confirmed = await confirm('Delete all todos in trash? This action cannot be undone.')
-            if (!confirmed) return;
-
             const res = await api.clearTrash(state.listUrl);
-
             if (!res.ok) {
+                this.todos = snapshot;
                 alert("Error deleting all todos in trash.");
-                return;
             }
-
-            await this.refreshTodos();
-
-        }  catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.todos = snapshot;
             alert("Can't connect to server :(");
-            return null;
         }
     },
 
+    //NEW LIST (usamos un loader para esperar al backend en esta primera vez de una nueva lista)
+    async createNewList() {
+        showLoader("Creating new list...");
+        this.show = false; // oculta la app mientras carga
+        this.isLoading = true;
 
-    /*
-        LEGACY FUNCTIONS - SLOGAN
-    */
-    //Funciones usadas para slogan, que sería el título de la list en la versión actual.
+        try {
+            const result = await createFlow();
+            if (!result) return;
+
+            this.todos = [
+                ...result.todos.map(t => ({ id: t.id, title: t.name, completed: t.status === "completed", removed: false })),
+                ...(result.trash || []).map(t => ({ id: t.id, title: t.name, completed: t.status === "completed", removed: true })),
+            ];
+            this.slogan = result.title || "Edit this title or the TODOs names with double-click :)";
+            this.intention = 'all';
+            this.show = true;
+            this.isLoading = false;
+        } catch(e) {
+            console.error(e);
+            this.show = true;
+            this.isLoading = false;
+        } finally {
+            hideLoader();
+        }
+    },
+
+    //TITLE (optimista)
     editText() {
         this.originalSlogan = this.slogan;
         this.isEditing = true;
-        this.$nextTick(() => {
-            this.$refs.sloganInput.focus();
-        });
+        this.$nextTick(() => { this.$refs.sloganInput.focus(); });
     },
 
     async saveText() {
+        this.isEditing = false; // cierra UI inmediato
+
         try {
             const res = await api.updateTitle(state.listUrl, this.slogan);
-
             if (!res.ok) {
+                this.slogan = this.originalSlogan;
                 alert("Error saving list-title.");
             }
-
-            this.isEditing = false;
-
-        } catch(error) {
-            console.error(error);
+        } catch(e) {
+            console.error(e);
+            this.slogan = this.originalSlogan;
             alert("Can't connect to server :(");
-            return null;
         }
-
     },
+
     cancelText() {
         this.slogan = this.originalSlogan;
         this.isEditing = false;
     },
+
     getSlogan() {
         return "Edit this title or the TODOs names with double-click :)";
     },
 
     /*
-        LEGACY FUNCTIONS 
-        Control de pantalla
+        LEGACY CODE: 
+        UI, drag, etc.
     */
-    controlScreen: function() {
+    controlScreen() {
         if (this.windowWidth < 768) {
             this.isShow = !this.isShow;
             return this.shortCut = '≡';
         }
     },
-    togglePop: function() {
-        this.popShow = !this.popShow;
-    },
-    shortCutAction: function() {
+    togglePop() { this.popShow = !this.popShow; },
+    shortCutAction() {
         this.isShow = !this.isShow;
-        if (this.isShow) {
-            return this.shortCut = '≡';
-        } else {
-            return this.shortCut = '≡ Quicks';
-        }
+        this.shortCut = this.isShow ? '≡' : '≡ Quicks';
     },
-    shuffle: function() {
-        this.filteredTodos = _.shuffle(this.filteredTodos);
-    },
+    shuffle() { this.filteredTodos = _.shuffle(this.filteredTodos); },
 
-    /*
-        LEGACY FUNCTIONS - 
-        Abrir menú para editar todo haciendo doble click en él.
-        Mover todos por la pantalla.
-    */
-    // Activa el modo edición para un todo (triggered by double-click) 
-    startEditingTodo: function(todo) {
-        this.editedTodo = {
-            id: todo.id,
-            title: todo.title
-        }
+    startEditingTodo(todo) {
+        this.editedTodo = { id: todo.id, title: todo.title };
     },
-
-    cancelEdit: function(todo) {
+    cancelEdit(todo) {
         todo.title = this.editedTodo.title;
         this.editedTodo = null;
     },
 
     dragenter(e, index) {
         e.preventDefault();
+        if (this.dragIndex === index) return;
 
-        if (this.dragIndex !== index) {
-            const sourceTodo = this.filteredTodos[this.dragIndex];
-            const targetTodo = this.filteredTodos[index];
-
-            const sourceIndex = this.todos.findIndex(t => t.id === sourceTodo.id);
-            const targetIndex = this.todos.findIndex(t => t.id === targetTodo.id);
-
-            const [moved] = this.todos.splice(sourceIndex, 1);
-            this.todos.splice(targetIndex, 0, moved);
-
-            this.dragIndex = index;
-        }
+        const sourceTodo  = this.filteredTodos[this.dragIndex];
+        const targetTodo  = this.filteredTodos[index];
+        const sourceIndex = this.todos.findIndex(t => t.id === sourceTodo.id);
+        const targetIndex = this.todos.findIndex(t => t.id === targetTodo.id);
+        const [moved] = this.todos.splice(sourceIndex, 1);
+        this.todos.splice(targetIndex, 0, moved);
+        this.dragIndex = index;
     },
-
     dragstart(event, index) {
-        const selection = window.getSelection().toString();
-
-        if (selection.length > 0) {
-            event.preventDefault();
-            return;
-        }
-
+        if (window.getSelection().toString().length > 0) { event.preventDefault(); return; }
         this.dragIndex = index;
         this.draggedTodoId = this.filteredTodos[index].id;
     },
-
     async dragend() {
-        //Evitamos la doble llamada de la función options en el back
         if (this.isReordering) return;
         this.isReordering = true;
 
-        //Obtenemos los todos
-        const list = this.filteredTodos;
-
-        const index = list.findIndex(t => t.id === this.draggedTodoId);
-
+        const list    = this.filteredTodos;
+        const index   = list.findIndex(t => t.id === this.draggedTodoId);
         const beforeId = list[index - 1]?.id;
-        const afterId = list[index + 1]?.id;
+        const afterId  = list[index + 1]?.id;
 
         try {
-            const res = await api.reorder(
-            state.listUrl,
-            this.draggedTodoId,
-            beforeId,
-            afterId
-            );
-
+            const res = await api.reorder(state.listUrl, this.draggedTodoId, beforeId, afterId);
             if (!res.ok) throw new Error();
-
-        } catch (e) {
+        } catch(e) {
             alert("Error reordering. Syncing...");
-            await this.refreshTodos(); // rollback
+            await this.refreshTodos();
         }
 
         this.dragIndex = null;
         this.draggedTodoId = null;
         this.isReordering = false;
     },
+    dragover(e) { e.preventDefault(); },
 
-    dragover: function(e, index) {
-        e.preventDefault();
-    },
-    
-    // JS hooks for animation
-    beforeEnter(dom) {
-        dom.classList.add('drag-enter-active');
-    },
+    beforeEnter(dom) { dom.classList.add('drag-enter-active'); },
     enter(dom, done) {
-        let delay = dom.dataset.delay;
         setTimeout(() => {
             this.delayTime = '1';
             dom.classList.remove('drag-enter-active');
             dom.classList.add('drag-enter-to');
-            let transitionend = window.ontransitionend
-                ? "transitionend"
-                : "webkitTransitionEnd";
-            dom.addEventListener(transitionend, function onEnd() {
-                dom.removeEventListener(transitionend, onEnd);
+            const evt = window.ontransitionend ? "transitionend" : "webkitTransitionEnd";
+            dom.addEventListener(evt, function onEnd() {
+                dom.removeEventListener(evt, onEnd);
                 done();
-                // Call done() to tell Vue animation is complete, triggering afterEnter hook
-            })
-        }, delay);
+            });
+        }, dom.dataset.delay);
     },
-    afterEnter(dom) {
-        dom.classList.remove('drag-enter-to');
-    },
+    afterEnter(dom) { dom.classList.remove('drag-enter-to'); },
 };
