@@ -105,21 +105,65 @@
         <!-- 3. INICIALIZACIÓN DE APP -->
         <script src="js/vue/vue.js"></script>
         <script type="module" src="js/main.js"></script>
+
+        <!-- Un style para el loader (tiran corte los css) -->
+        <style>
+            #app-loader {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                z-index: 9999;
+                background: transparent;
+                pointer-events: none;
+            }
+            #app-loader.hidden {
+                display: none;
+            }
+            .loader-spinner {
+                width: 36px;
+                height: 36px;
+                border: 3px solid rgba(0,0,0,0.12);
+                border-top-color: rgba(0,0,0,0.5);
+                border-radius: 50%;
+                animation: loader-spin 0.75s linear infinite;
+            }
+            .loader-message {
+                font-family: inherit;
+                font-size: 13px;
+                color: rgba(0,0,0,0.45);
+                letter-spacing: 0.02em;
+            }
+            @keyframes loader-spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
     </head>
 
-
+    
     <body>
+        <!-- 
+            LOADER
+        -->
+        <div id="app-loader">
+            <div class="loader-spinner"></div>
+            <div class="loader-message" id="loader-message">Connecting...</div>
+        </div>
+
         <!--
             COLOR DE FONDO
         -->
         <div class="bg-pattern"></div>
 
-  
+
+        <!-- 
+            HTML APP TODO
+        -->
         <div class="todo-wrapper">
 
-            <!-- 
-                HTML APP TODO
-            -->
             <div id="todo-app" class="todo-app" v-cloak>
 
                 <!-- HEADER -->
@@ -252,8 +296,6 @@
                             <li>❌ A list will be deleted if unchanged for 7 days.</li>
                             <li>❌ Spamming actions may restrict you. </li>
                             <li>❌ Every list can have a max of 100 todos. </li>
-                            
-                            </li>
                         </ul>
 
                         <transition-group
@@ -360,13 +402,15 @@
                                         value="All"
                                         :class="{selected: intention === 'all'}"
                                         @click="intention ='all'"></li>
-                                <li v-if="completedTodosCount"><input
-                                    class="btn-small action-progress"
-                                    type="button"
-                                    value="In Progress"
-                                    v-if="leftTodosCount"
-                                    :class="{selected: intention === 'ongoing'}"
-                                    @click="intention ='ongoing'"></li>
+                                <li v-if="leftTodosCount">
+                                    <input
+                                        class="btn-small action-progress"
+                                        type="button"
+                                        value="In Progress"
+                                        :class="{selected: intention === 'ongoing'}"
+                                        @click="intention ='ongoing'"
+                                    >
+                                </li>
                                 <li v-if="completedTodosCount">
                                     <input
                                         class="btn-small action-completed"
@@ -403,7 +447,6 @@
 
                             </ul>
                             <ul class="todo-func-list batch">
-                                <!-- <li v-if="todos.length"></li> -->
                                 <li v-if="leftTodosCount">
                                     <input
                                         type="button"
@@ -420,13 +463,14 @@
                                         v-if="completedTodosCount"
                                         @click="clearCompleted">
                                 </li>
-                                <li v-if="todos.length"><input
+                                <li v-if="activeTodosCount"><input
                                     type="button"
                                     class="btn-small clear-all"
                                     value="Send ALL to trash"
                                     @click="clearAll">
                                 </li>
                             </ul>
+
                             <ul class="todo-func-list datasave">
 
                                 <li>
@@ -442,6 +486,8 @@
 
                     </div>
                 </div>
+            </div>
         </div>
+
     </body>
 </html>

@@ -20,6 +20,10 @@ export const computed = {
         return this.completedTodos.length
     },
 
+    activeTodosCount() {
+        return this.todos.filter(t => !t.removed).length;
+    },
+
     filteredTodos() {
         if (this.intention === 'ongoing') {
             return this.todos.filter(t => !t.completed && !t.removed);
