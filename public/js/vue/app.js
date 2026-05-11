@@ -91,6 +91,16 @@ export function createApp(initialData) {
             window.onresize = () => {   // Attach window.onresize event to mounted function
                 this.windowWidth = document.documentElement.clientWidth;
             };
+
+            window.addEventListener('beforeunload', (e) => {
+                const hasPendingTimers = Object.keys(this.pendingTimers).length > 0;
+                const hasTempTodos = this.todos.some(t => t.id < 0);
+                
+                if (hasPendingTimers || hasTempTodos) {
+                    e.preventDefault();
+                    e.returnValue = 'Your info hasn\'t been saved on the cloud yet. Do you want to leave?';
+                }
+            });
         },
     })
 }
