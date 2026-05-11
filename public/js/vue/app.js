@@ -40,6 +40,10 @@ export function createApp(initialData) {
                 pendingTimers: {},   // { [todoId]: timeoutId }
                 pendingStatus: {},   // { [todoId]: "completed" | "created" } — última acción pendiente
                 isCreatingList: false,
+
+                //Evitar errores de reoder con optimistic ui
+                reorderQueue: [],
+                isReordering: false,
             };
         },
 
