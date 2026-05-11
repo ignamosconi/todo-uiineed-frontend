@@ -62,10 +62,22 @@ export const methods = {
                 return;
             }
 
+            //sincronizar estado después de confirmar el ID:
             const created = await res.json();
-            // Reemplazar el fakeId por el id real
             const idx = this.todos.findIndex(t => t.id === fakeId);
-            if (idx !== -1) this.todos[idx].id = created.id;
+            if (idx !== -1) {
+                this.todos[idx].id = created.id;
+
+                // Si el usuario cambió el status mientras era temporal, sincronizamos ahora
+                if (this.todos[idx].completed) {
+                    api.updateStatus(state.listUrl, created.id, "completed").catch(console.error);
+                }
+
+                // Si el usuario lo mandó a trash mientras era temporal, sincronizamos ahora
+                if (this.todos[idx].removed) {
+                    api.updateIsEliminated(state.listUrl, created.id, true).catch(console.error);
+                }
+            }
 
         } catch(e) {
             console.error(e);
@@ -78,30 +90,22 @@ export const methods = {
     //Ambas acciones (complete / uncomplete) pasan por el mismo debounce.
     _scheduleStatusUpdate(todo, newStatus) {
         const id = todo.id;
-
-        // 1. UI inmediato
         todo.completed = (newStatus === "completed");
-
-        // 2. Guardar cuál es la última acción deseada
         this.pendingStatus[id] = newStatus;
 
-        // 3. Cancelar timer anterior si existe
-        if (this.pendingTimers[id]) {
-            clearTimeout(this.pendingTimers[id]);
-        }
+        if (this.pendingTimers[id]) clearTimeout(this.pendingTimers[id]);
 
-        // 4. Armar nuevo timer
+        // Si el ID es temporal, solo actualizamos el UI. El addTodo se encargará
+        // de sincronizar el estado final cuando el back confirme.
+        if (id < 0) return;
+
         this.pendingTimers[id] = setTimeout(async () => {
             delete this.pendingTimers[id];
             const statusToSend = this.pendingStatus[id];
             delete this.pendingStatus[id];
-
             try {
                 const res = await api.updateStatus(state.listUrl, id, statusToSend);
-                if (!res.ok) {
-                    // Revertir a lo que está en el back: recargamos solo ese todo
-                    await this.refreshTodos();
-                }
+                if (!res.ok) await this.refreshTodos();
             } catch(e) {
                 console.error(e);
                 await this.refreshTodos();
@@ -141,7 +145,9 @@ export const methods = {
 
     //REMOVE / RESTORE, ambos optimistas.
     async removeTodo(todo) {
-        todo.removed = true; // UI inmediato
+        todo.removed = true;
+
+        if (todo.id < 0) return; //el addTodo lo sincroniza cuando confirme
 
         try {
             const res = await api.updateIsEliminated(state.listUrl, todo.id, true);
@@ -281,6 +287,9 @@ export const methods = {
         showLoader("Creating new list...");
         this.show = false; // oculta la app mientras carga
         this.isLoading = true;
+        this.isCreatingList = true;
+        this.newTodoTitle = ''; //limpia el input
+        this.checkEmpty = false;
 
         try {
             const result = await createFlow();
@@ -300,6 +309,7 @@ export const methods = {
             this.isLoading = false;
         } finally {
             hideLoader();
+            this.isCreatingList = false;
         }
     },
 
@@ -377,27 +387,52 @@ export const methods = {
         this.dragIndex = index;
         this.draggedTodoId = this.filteredTodos[index].id;
     },
-    async dragend() {
-        if (this.isReordering) return;
-        this.isReordering = true;
 
-        const list    = this.filteredTodos;
-        const index   = list.findIndex(t => t.id === this.draggedTodoId);
+    async dragend() {
+        const list     = this.filteredTodos;
+        const index    = list.findIndex(t => t.id === this.draggedTodoId);
         const beforeId = list[index - 1]?.id;
         const afterId  = list[index + 1]?.id;
+        const id       = this.draggedTodoId;
 
-        try {
-            const res = await api.reorder(state.listUrl, this.draggedTodoId, beforeId, afterId);
-            if (!res.ok) throw new Error();
-        } catch(e) {
-            alert("Error reordering. Syncing...");
-            await this.refreshTodos();
+        this.dragIndex     = null;
+        this.draggedTodoId = null;
+
+        // Si algún ID involucrado es temporal (todavía no confirmado por el back),
+        // el UI ya refleja el orden correcto — esperamos a que el back confirme
+        // y el próximo reorder usará IDs reales.
+        if (id < 0 || (beforeId !== undefined && beforeId < 0) || (afterId !== undefined && afterId < 0)) {
+            return;
         }
 
-        this.dragIndex = null;
-        this.draggedTodoId = null;
+        this.reorderQueue.push({ id, beforeId, afterId });
+        if (this.isReordering) return;
+        await this._processReorderQueue();
+    },
+
+    async _processReorderQueue() {
+        if (this.isReordering || this.reorderQueue.length === 0) return;
+        this.isReordering = true;
+
+        while (this.reorderQueue.length > 0) {
+            // Tomamos solo el ÚLTIMO estado deseado por id
+            // (si el usuario reordenó el mismo todo dos veces, solo importa el último)
+            const last = this.reorderQueue.pop();
+            this.reorderQueue = this.reorderQueue.filter(op => op.id !== last.id);
+
+            try {
+                const res = await api.reorder(state.listUrl, last.id, last.beforeId, last.afterId);
+                if (!res.ok) throw new Error();
+            } catch(e) {
+                alert("Error reordering. Syncing...");
+                await this.refreshTodos();
+                break; // si falló, sincronizamos y paramos — el estado visual ya es correcto
+            }
+        }
+
         this.isReordering = false;
     },
+
     dragover(e) { e.preventDefault(); },
 
     beforeEnter(dom) { dom.classList.add('drag-enter-active'); },
