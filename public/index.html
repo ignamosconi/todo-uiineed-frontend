@@ -200,11 +200,12 @@
                                 placeholder="Add a to-do item..."
                                 v-model="newTodoTitle"
                                 @keyup.enter="addTodo"
-                                :class='{empty:emptyChecked}'/>
+                                :class='{empty:emptyChecked}'
+                                :disabled="isCreatingList"/>
                             <transition name="tips">
                                 <div class="tips" v-if='emptyChecked' style="color:red">💡Please enter content!</div>
                             </transition>
-                            <button class="btn submit-btn" type="button" @click="addTodo">Add</button>
+                            <button class="btn submit-btn" type="button" @click="addTodo" :disabled="isCreatingList">Add</button>
                         </div>
 
                     </div>

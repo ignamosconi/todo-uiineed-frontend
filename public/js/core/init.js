@@ -78,6 +78,12 @@ async function loadTodosWithRetry(url) {
             return showListNotFound(url);
         }
 
+        if (result === "rate_limited") {
+            hideLoader();
+            await alert("Too many requests. Please slow down :)");
+            return null;
+        }
+
         if (result !== null) {
             // Éxito
             hideLoader();
@@ -151,6 +157,7 @@ async function loadTodos(url) {
         ]);
 
         if (res.status === 404) return "not_found";
+        if (res.status === 429 || listRes.status === 429) return "rate_limited";
         if (!res.ok || !listRes.ok) return null;
 
         const [data, list] = await Promise.all([res.json(), listRes.json()]);
