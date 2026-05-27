@@ -45,7 +45,7 @@ export const methods = {
         const fakeId = tempId();
 
         // 1. UI inmediato
-        this.todos.unshift({ id: fakeId, title: name, completed: false, removed: false });
+        this.todos.push({ id: fakeId, title: name, completed: false, removed: false });
         this.newTodoTitle = '';
         this.checkEmpty = false;
 
