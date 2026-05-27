@@ -41,49 +41,57 @@ export const methods = {
             return;
         }
 
-        const name  = this.newTodoTitle;
+        const name = this.newTodoTitle;
         const fakeId = tempId();
 
-        // 1. UI inmediato
+        // UI inmediato
         this.todos.unshift({ id: fakeId, title: name, completed: false, removed: false });
         this.newTodoTitle = '';
         this.checkEmpty = false;
 
-        // 2. Backend en background
-        try {
-            const res = await api.addTodo(state.listUrl, name);
+        // Encolar y procesar en serie
+        this.addQueue.push({ fakeId, name });
+        if (!this.isAdding) await this._processAddQueue();
+    },
 
-            if (!res.ok) {
-                // Revertir: sacar el todo falso
+    //Auxiliar addTodo()
+    async _processAddQueue() {
+        if (this.isAdding || this.addQueue.length === 0) return;
+        this.isAdding = true;
+
+        while (this.addQueue.length > 0) {
+            const { fakeId, name } = this.addQueue.shift();
+
+            try {
+                const res = await api.addTodo(state.listUrl, name);
+
+                if (!res.ok) {
+                    this.todos = this.todos.filter(t => t.id !== fakeId);
+                    let message = "Error creating todo.";
+                    try { const d = await res.json(); if (d.message) message = d.message; } catch {}
+                    alert(message);
+                    continue;
+                }
+
+                const created = await res.json();
+                const idx = this.todos.findIndex(t => t.id === fakeId);
+                if (idx !== -1) {
+                    this.todos[idx].id = created.id;
+                    if (this.todos[idx].completed) {
+                        api.updateStatus(state.listUrl, created.id, "completed").catch(console.error);
+                    }
+                    if (this.todos[idx].removed) {
+                        api.updateIsEliminated(state.listUrl, created.id, true).catch(console.error);
+                    }
+                }
+            } catch(e) {
+                console.error(e);
                 this.todos = this.todos.filter(t => t.id !== fakeId);
-                let message = "Error creating todo.";
-                try { const d = await res.json(); if (d.message) message = d.message; } catch {}
-                alert(message);
-                return;
+                alert("Can't connect to server :(");
             }
-
-            //sincronizar estado después de confirmar el ID:
-            const created = await res.json();
-            const idx = this.todos.findIndex(t => t.id === fakeId);
-            if (idx !== -1) {
-                this.todos[idx].id = created.id;
-
-                // Si el usuario cambió el status mientras era temporal, sincronizamos ahora
-                if (this.todos[idx].completed) {
-                    api.updateStatus(state.listUrl, created.id, "completed").catch(console.error);
-                }
-
-                // Si el usuario lo mandó a trash mientras era temporal, sincronizamos ahora
-                if (this.todos[idx].removed) {
-                    api.updateIsEliminated(state.listUrl, created.id, true).catch(console.error);
-                }
-            }
-
-        } catch(e) {
-            console.error(e);
-            this.todos = this.todos.filter(t => t.id !== fakeId);
-            alert("Can't connect to server :(");
         }
+
+        this.isAdding = false;
     },
 
     //TOGGLE STATUS para los todos, con debaunce (evitar spam)
