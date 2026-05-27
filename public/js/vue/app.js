@@ -18,6 +18,8 @@ export function createApp(initialData) {
                 todos: [],
                 isLoading: true,        //Evita que se flasheen los tips antes que carguen los todos del back.
                 checkEmpty: false,
+                addQueue: [],           //Si mandamos todas las peticiones juntas choca en el back; las mandamos de a una (manteniendo optimistic ui)
+                isAdding: false,
                 newTodoTitle: '',
                 initialData,        //Usamos el que viene del main.ts
                 editedTodo: null,
@@ -99,8 +101,10 @@ export function createApp(initialData) {
             window.addEventListener('beforeunload', (e) => {
                 const hasPendingTimers = Object.keys(this.pendingTimers).length > 0;
                 const hasTempTodos = this.todos.some(t => t.id < 0);
+                const hasAddQueue = this.isAdding || this.addQueue.length > 0;
+                const hasReorderQueue = this.isReordering || this.reorderQueue.length > 0;
                 
-                if (hasPendingTimers || hasTempTodos) {
+                if (hasPendingTimers || hasTempTodos || hasAddQueue || hasReorderQueue) {
                     e.preventDefault();
                     e.returnValue = 'Your info hasn\'t been saved on the cloud yet. Do you want to leave?';
                 }
