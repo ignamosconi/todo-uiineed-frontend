@@ -804,7 +804,7 @@ h1 {
 
 .about .info-ico {
   position: relative;
-  z-index: 9999;
+  z-index: 99999;
   margin: 10px;
   display: -webkit-box;
   display: -ms-flexbox;
@@ -838,7 +838,7 @@ h1 {
   position: absolute;
   top: 36px;
   right: 24px;
-  z-index: 999;
+  z-index: 99999;
   -webkit-transition: 0.25s;
   transition: 0.25s;
   border-radius: 8px;
