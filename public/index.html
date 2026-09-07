@@ -144,12 +144,6 @@
 
         <!-- Un style para el nav-bar (para que no pise elementos) -->
         <style>
-            .nav {
-                z-index: 5;
-            }
-            .about .info-ico {
-                z-index: 5;
-            }
             .todo-list-box {
                 position: relative;
                 z-index: 20;
@@ -229,9 +223,9 @@
                     </div>
                 </div>
 
-                <!-- CUSTOM INFO -->
-                <div class="nav">
-
+                <!-- CUSTOM INFO (BOTONES AL FONDO) -->
+                <!-- Este nav tiene z-index bajo para quedar detrás de los modales -->
+                <div class="nav" style="z-index: 5 !important;">
                     <!-- Botón "Github" -->
                     <div class="github">
                         <a href="https://github.com/ignamosconi/todo-uiineed-frontend" target="_blank" class="social-link" draggable="false">
@@ -248,31 +242,36 @@
                                 :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
                                 About
                             </div>
-                            <div class="popup animated popIn" v-if="!popShow">
-                                <div class="author">
-                                    <img src="img/author.jpg" alt="">
-                                    Igna :)
-                                </div>
-                                <div class="author-info">
-                                    <div class="author-desc">
-                                        I don't remember any code I wrote, even though it made me.
-                                    </div>
-                                </div>
-                                <div class="social">
-                                    
-                                    <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
-                                        <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                    <a href="mailto:ignamosconi@gmail.com" class="social-link">
-                                        <img src="img/social/mail.svg" class="ic-social" alt="">
-                                    </a>
-                                    <a href="https://ignamosconi.com.ar" target="_blank" class="social-link" draggable="false">
-                                        <img src="img/social/dribbble.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div> 
+                </div>
+
+                <!-- CUSTOM INFO (POPUP AL FRENTE) -->
+                <div class="nav" style="z-index: 999999 !important; pointer-events: none;">
+                    <!-- Al popup le devolvemos los clicks con pointer-events: auto -->
+                    <div class="popup animated popIn" v-if="!popShow" style="pointer-events: auto;" @click.stop>
+                        <div class="author">
+                            <img src="img/author.jpg" alt="">
+                            Igna :)
+                        </div>
+                        <div class="author-info">
+                            <div class="author-desc">
+                                I don't remember any code I wrote, even though it made me.
+                            </div>
+                        </div>
+                        <div class="social">
+                            
+                            <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
+                                <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
+                            </a>
+                            <a href="mailto:ignamosconi@gmail.com" class="social-link">
+                                <img src="img/social/mail.svg" class="ic-social" alt="">
+                            </a>
+                            <a href="https://ignamosconi.com.ar" target="_blank" class="social-link" draggable="false">
+                                <img src="img/social/portfolio.svg" class="ic-social" alt="" draggable="false">
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- APP TODO LIST -->
