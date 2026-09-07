@@ -182,7 +182,7 @@
         -->
         <div class="todo-wrapper">
 
-            <div id="todo-app" class="todo-app" v-cloak>
+            <div id="todo-app" class="todo-app" v-cloak @click="popShow = true">
 
                 <!-- HEADER -->
                 <div class="container header ">
@@ -244,7 +244,7 @@
                         <div class="info">
                             <div
                                 class="info-ico"
-                                @click="togglePop"
+                                @click.stop="togglePop"
                                 :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
                                 About
                             </div>
@@ -265,6 +265,9 @@
                                     </a>
                                     <a href="mailto:ignamosconi@gmail.com" class="social-link">
                                         <img src="img/social/mail.svg" class="ic-social" alt="">
+                                    </a>
+                                    <a href="https://ignamosconi.com.ar" target="_blank" class="social-link" draggable="false">
+                                        <img src="img/social/dribbble.svg" class="ic-social" alt="" draggable="false">
                                     </a>
                                 </div>
                             </div>
