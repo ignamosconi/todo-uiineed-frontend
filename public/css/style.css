@@ -837,10 +837,10 @@ h1 {
 
 .popup {
   display: block;
-  position: absolute;
-  top: 36px;
+  position: fixed;
+  top: 52px;
   right: 24px;
-  z-index: 99999;
+  z-index: 999999;
   -webkit-transition: 0.25s;
   transition: 0.25s;
   border-radius: 8px;
