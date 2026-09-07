@@ -240,7 +240,7 @@
                     </div>
 
                     <!-- Recuadro "about" -->
-                   <div class="about">
+                    <div class="about">
                         <div class="info">
                             <div
                                 class="info-ico"
@@ -248,31 +248,31 @@
                                 :style="{ fontWeight: popShow ? 'normal' : 'bold' }">
                                 About
                             </div>
-                            <div class="popup animated popIn" v-if="!popShow">
-                                <div class="author">
-                                    <img src="img/author.jpg" alt="">
-                                    Igna :)
-                                </div>
-                                <div class="author-info">
-                                    <div class="author-desc">
-                                        I don't remember any code I wrote, even though it made me.
-                                    </div>
-                                </div>
-                                <div class="social">
-                                    
-                                    <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
-                                        <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                    <a href="mailto:ignamosconi@gmail.com" class="social-link">
-                                        <img src="img/social/mail.svg" class="ic-social" alt="">
-                                    </a>
-                                    <a href="https://ignamosconi.com.ar" target="_blank" class="social-link" draggable="false">
-                                        <img src="img/social/dribbble.svg" class="ic-social" alt="" draggable="false">
-                                    </a>
-                                </div>
-                            </div>
                         </div>
                     </div> 
+            </div>
+            <div class="popup animated popIn" v-if="!popShow" @click.stop>
+                <div class="author">
+                    <img src="img/author.jpg" alt="">
+                    Igna :)
+                </div>
+                <div class="author-info">
+                    <div class="author-desc">
+                        I don't remember any code I wrote, even though it made me.
+                    </div>
+                </div>
+                <div class="social">
+                    <a href="https://github.com/ignamosconi" target="_blank" class="social-link" draggable="false">
+                        <img src="img/social/github.svg" class="ic-social" alt="" draggable="false">
+                    </a>
+                    <a href="mailto:ignamosconi@gmail.com" class="social-link">
+                        <img src="img/social/mail.svg" class="ic-social" alt="">
+                    </a>
+                    <a href="https://ignamosconi.com.ar" target="_blank" class="social-link" draggable="false">
+                        <img src="img/social/dribbble.svg" class="ic-social" alt="" draggable="false">
+                    </a>
+                </div>
+            </div>
                 </div>
 
                 <!-- APP TODO LIST -->
